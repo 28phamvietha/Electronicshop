@@ -1,0 +1,174 @@
+﻿@*@{
+        ViewBag.Title = "Categories";
+        Layout = "~/Views/Shared/_CustomerLayout.cshtml";
+    }
+
+    @model IEnumerable<ElectronicsShop.Models.Category>
+    @{
+        ViewBag.Title = "Categories";
+    }
+
+    <h2>Danh mục sản phẩm</h2>
+
+    <ul>
+        @foreach (var category in Model)
+        {
+            <li><a href="@Url.Action("ProductsByCategory", "Product", new { categoryId = category.category_id })">@category.category_name</a></li>
+        }
+    </ul>*@
+
+
+
+@model IEnumerable<ElectronicsShop.Models.Category>
+
+@{
+    ViewBag.Title = "Danh mục sản phẩm";
+    Layout = "~/Views/Shared/_CustomerLayout.cshtml";
+}
+
+<div class="section">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="section-title">
+                    <h3 class="title">Danh mục sản phẩm</h3>
+                </div>
+            </div>
+
+            <div class="row">
+                @foreach (var category in Model)
+                {
+                    <div class="col-md-4 col-xs-6">
+                        <div class="shop" style="margin-bottom: 30px;">
+                            <div class="shop-img">
+                                @{
+                                    var catName = category.category_name.ToLower();
+                                    var imgName = "shop01.png"; // Mặc định Laptop
+
+                                    if (catName.Contains("điện") || catName.Contains("phone"))
+                                    {
+                                        imgName = "apple1_1.png"; //
+                                    }
+                                    else if (catName.Contains("máy ảnh") || catName.Contains("ảnh"))
+                                    {
+                                        imgName = "shop02.png"; //
+                                    }
+                                    else if (catName.Contains("phụ kiện") || catName.Contains("kiện"))
+                                    {
+                                        imgName = "shop03.png";
+                                    }
+
+                                    var finalPath = Url.Content("~/wwwroot/img/" + imgName);
+                                }
+                                <img src="@finalPath" alt="@category.category_name">
+                            </div>
+                            <div class="shop-body">
+                                <h3>@category.category_name<br>Bộ sưu tập</h3>
+                                <a href="@Url.Action("ProductsByCategory", "Product", new { categoryId = category.category_id })" class="cta-btn">
+                                    Mua sắm ngay <i class="fa fa-arrow-circle-right"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .shop {
+            position: relative;
+            overflow: hidden;
+            background-color: #f5f5f5;
+            height: 240px;
+            border-radius: 10px;
+            border: 1px solid #E4E7ED;
+            transition: 0.3s all;
+        }
+
+        .shop:before {
+            content: "";
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            width: 60%;
+            background: #D10024;
+            opacity: 0.9;
+            -webkit-transform: skewX(-15deg);
+            transform: skewX(-15deg);
+            -webkit-transform-origin: bottom left;
+            transform-origin: bottom left;
+            z-index: 1;
+            margin-left: -20%;
+        }
+
+
+        .shop .shop-img {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 100%;
+            z-index: 0;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 15px;
+        }
+
+        .shop .shop-img img {
+            opacity: 1 !important;
+            visibility: visible !important;
+            display: block !important;
+            max-height: 180px;
+            width: auto;
+            object-fit: contain;
+            -webkit-transform: skewX(-15deg) scale(1) !important;
+            transform: skewX(-15deg) scale(1) !important;
+            mix-blend-mode: multiply;
+            transition: 0.3s all;
+        }
+
+
+
+        .shop-body h3 {
+            color: #2B2D42;
+            font-size: 18px;
+            font-weight: 700;
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        .shop-body h3 br + span {
+            color: #8D99AE;
+            font-size: 14px;
+            font-weight: 400;
+        }
+
+        .shop-body .cta-btn {
+            color: #D10024;
+            text-transform: uppercase;
+            font-weight: 700;
+            font-size: 12px;
+            display: inline-block;
+            margin-top: 5px;
+        }
+
+        .shop-body .cta-btn i {
+            padding-left: 5px;
+        }
+
+        .shop:hover {
+            box-shadow: 0px 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .shop:hover .shop-img img {
+            -webkit-transform: skewX(-15deg) scale(1.1) !important;
+            transform: skewX(-15deg) scale(1.1) !important;
+        }
+    </style>
+}
+

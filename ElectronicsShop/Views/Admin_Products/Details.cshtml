@@ -1,0 +1,142 @@
+﻿@model ElectronicsShop.Models.Product
+
+@{
+    ViewBag.Title = "Details";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<h2>Chi tiết</h2>
+
+<div>
+    <h4>Sản phẩm</h4>
+    <hr />
+    <dl class="dl-horizontal">
+        <dt>
+            @Html.DisplayNameFor(model => model.Category.category_name)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.Category.category_name)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.product_name)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.product_name)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.description)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.description)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.price)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.price)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.discount_price)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.discount_price)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.stock)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.stock)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.brand)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.brand)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.is_new)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.is_new)
+        </dd>
+
+    </dl>
+    <div class="form-group">
+        <div class="col-md-10">
+            @{
+                var listi = Model.Product_Images != null
+? Model.Product_Images.ToList()
+: new List<ElectronicsShop.Models.Product_Images>();
+
+                string img1 = (listi != null && listi.Count > 0) ? listi[0].image_url : "noimage.png";
+                string img2 = (listi != null && listi.Count > 1) ? listi[1].image_url : "noimage.png";
+                string img3 = (listi != null && listi.Count > 2) ? listi[2].image_url : "noimage.png";
+            }
+            <table>
+                <tr>
+                    <td>
+                        <label>Ảnh 1</label>
+                        <br />
+                        <img src="@Url.Content("~/Images/" + img1)" alt="Anh" width="200" class="img-thumbnail" />
+                    </td>
+                    <td>
+                        <label>Ảnh 2</label>
+                        <br />
+                        <img src="@Url.Content("~/Images/" + img2)" alt="Anh" width="200" class="img-thumbnail" />
+                    </td>
+                    <td>
+                        <label>Ảnh 3</label>
+                        <br />
+                        <img src="@Url.Content("~/Images/" + img3)" alt="Anh" width="200" class="img-thumbnail" />
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>
+
+<hr />
+<h4>Thông số kỹ thuật</h4>
+
+@if (Model.Specifications != null && Model.Specifications.Any())
+{
+    var groups = Model.Specifications.GroupBy(x => x.spec_group);
+
+    foreach (var group in groups)
+    {
+        <h5>@group.Key</h5>
+        <table class="table table-bordered">
+            @foreach (var item in group)
+            {
+                <tr>
+                    <td>@item.spec_name</td>
+                    <td>@item.spec_value</td>
+                </tr>
+            }
+        </table>
+    }
+}
+else
+{
+    <p>Không có thông số</p>
+}
+
+<p>
+    @Html.ActionLink("Sửa", "Edit", new { id = Model.product_id }) |
+    @Html.ActionLink("Trở về danh sách", "Index")
+</p>

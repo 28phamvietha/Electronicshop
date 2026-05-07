@@ -1,0 +1,154 @@
+﻿@model ElectronicsShop.Models.Product
+
+@{
+    ViewBag.Title = "Create";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<h2>Create</h2>
+
+
+@using (Html.BeginForm("Create", "Admin_Products", FormMethod.Post, new { enctype = "multipart/form-data" }))
+{
+    @Html.AntiForgeryToken()
+    
+<div class="form-horizontal">
+    <h4>Sản phẩm</h4>
+    <hr />
+    @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+    <div class="form-group">
+        @Html.LabelFor(model => model.category_id, "Danh mục", htmlAttributes: new { @class = "control-label col-md-2" })
+        <div class="col-md-10">
+            @Html.DropDownList("category_id", null, htmlAttributes: new { @class = "form-control" })
+            @Html.ValidationMessageFor(model => model.category_id, "", new { @class = "text-danger" })
+        </div>
+    </div>
+
+    <div class="form-group">
+        @Html.LabelFor(model => model.product_name, htmlAttributes: new { @class = "control-label col-md-2" })
+        <div class="col-md-10">
+            @Html.EditorFor(model => model.product_name, new { htmlAttributes = new { @class = "form-control" } })
+            @Html.ValidationMessageFor(model => model.product_name, "", new { @class = "text-danger" })
+        </div>
+    </div>
+
+    <div class="form-group">
+        @Html.LabelFor(model => model.description, htmlAttributes: new { @class = "control-label col-md-2" })
+        <div class="col-md-10">
+            @Html.EditorFor(model => model.description, new { htmlAttributes = new { @class = "form-control" } })
+            @Html.ValidationMessageFor(model => model.description, "", new { @class = "text-danger" })
+        </div>
+    </div>
+
+    <div class="form-group">
+        @Html.LabelFor(model => model.price, htmlAttributes: new { @class = "control-label col-md-2" })
+        <div class="col-md-10">
+            @Html.EditorFor(model => model.price, new { htmlAttributes = new { @class = "form-control" } })
+            @Html.ValidationMessageFor(model => model.price, "", new { @class = "text-danger" })
+        </div>
+    </div>
+
+    <div class="form-group">
+        @Html.LabelFor(model => model.discount_price, htmlAttributes: new { @class = "control-label col-md-2" })
+        <div class="col-md-10">
+            @Html.EditorFor(model => model.discount_price, new { htmlAttributes = new { @class = "form-control" } })
+            @Html.ValidationMessageFor(model => model.discount_price, "", new { @class = "text-danger" })
+        </div>
+    </div>
+
+    <div class="form-group">
+        @Html.LabelFor(model => model.stock, htmlAttributes: new { @class = "control-label col-md-2" })
+        <div class="col-md-10">
+            @Html.EditorFor(model => model.stock, new { htmlAttributes = new { @class = "form-control" } })
+            @Html.ValidationMessageFor(model => model.stock, "", new { @class = "text-danger" })
+        </div>
+    </div>
+
+    <div class="form-group">
+        @Html.LabelFor(model => model.brand, htmlAttributes: new { @class = "control-label col-md-2" })
+        <div class="col-md-10">
+            @Html.EditorFor(model => model.brand, new { htmlAttributes = new { @class = "form-control" } })
+            @Html.ValidationMessageFor(model => model.brand, "", new { @class = "text-danger" })
+        </div>
+    </div>
+
+    <div class="form-group">
+        @Html.LabelFor(model => model.is_new, htmlAttributes: new { @class = "control-label col-md-2" })
+        <div class="col-md-10">
+            <div class="checkbox">
+                @Html.EditorFor(model => model.is_new)
+                @Html.ValidationMessageFor(model => model.is_new, "", new { @class = "text-danger" })
+            </div>
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="col-md-10">
+            <table class="table-bordered">
+                <tr>
+                    <td>
+                        <label>Ảnh 1</label>
+                        <input type="file" name="FileName1" onchange="LoadFile(event,1)" /><br />
+                        <img src="~/Images/noimage.png" alt="Anh" width="200" id="output1" />
+                    </td>
+                    <td>
+                        <label>Ảnh 2</label>
+                        <input type="file" name="FileName2" onchange="LoadFile(event,2)" /><br />
+                        <img src="~/Images/noimage.png" alt="Anh" width="200" id="output2" />
+                    </td>
+                    <td>
+                        <label>Ảnh 3</label>
+                        <input type="file" name="FileName3" onchange="LoadFile(event,3)" /><br />
+                        <img src="~/Images/noimage.png" alt="Anh" width="200" id="output3" />
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <h4>Thông số kỹ thuật</h4>
+    <div id="spec-area">
+        <div class="spec-item">
+            <input name="spec_group" class="form-control" placeholder="Nhóm (VD: Màn hình)" style="margin-bottom:8px;" />
+            <input name="spec_name" class="form-control" placeholder="Tên (VD: Kích thước)" style="margin-bottom:8px;" />
+            <input name="spec_value" class="form-control" placeholder="Giá trị (VD: 6.7 inch)" /> <br>
+        </div>
+
+    </div>
+    <button type="button" onclick="addSpec()" class="btn btn-primary">
+        + Thêm thông số 
+    </button>
+
+    <div class="form-group">
+        <div class="col-md-offset-2 col-md-10"> <br> 
+            <input type="submit" value="Thêm mới" class="btn btn-default" />
+        </div>
+    </div>
+</div>
+}
+
+<div>
+    @Html.ActionLink("Trở về danh sách", "Index")
+</div>
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+}
+<script>
+    var LoadFile = function (event,pid) {
+        var image = document.getElementById("output"+pid);
+        image.src = URL.createObjectURL(event.target.files[0]);
+    }
+    
+    var index = 1;
+
+    function addSpec() {
+        var html = `
+        <div class="spec-item">
+            <input name="spec_group" class="form-control" placeholder="Nhóm (VD: Màn hình)" style="margin-bottom:8px;" />
+            <input name="spec_name" class="form-control" placeholder="Tên (VD: Kích thước)" style="margin-bottom:8px;" />
+            <input name="spec_value" class="form-control" placeholder="Giá trị (VD: 6.7 inch)" />  <br>
+        </div>`;
+        
+        document.getElementById("spec-area").insertAdjacentHTML("beforeend", html);
+    }
+</script>

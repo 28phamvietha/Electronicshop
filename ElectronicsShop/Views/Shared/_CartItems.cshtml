@@ -1,0 +1,55 @@
+﻿@model List<ElectronicsShop.Models.Cart>
+@using System.Globalization
+@{
+    var cultureInfo = new CultureInfo("vi-VN");
+}
+<div class="cart-list">
+    @if (Session["UserId"] == null)
+    {
+        <div class="product-widget">
+            <div class="product-body">
+                <h3 class="product-name"><a href="@Url.Action("Login","Account")">Vui lòng đăng nhập để xem giỏ hàng</a></h3>
+            </div>
+        </div>
+    }
+    else if (!Model.Any())
+    {
+        <div class="product-widget">
+            <div class="product-body">
+                <h3 class="product-name"><a href="@Url.Action("Index","Cart")">Giỏ hàng trống</a></h3>
+            </div>
+        </div>
+    }
+    else
+    {
+        foreach (var item in Model)
+        {
+            var img = item.Product?.Product_Images?.FirstOrDefault()?.image_url ?? "noimage.png";
+            var itemPrice = item.Product?.discount_price ?? item.Product?.price ?? 0M;
+            <div class="product-widget">
+                <div class="product-img">
+                    <img src="~/Images/@img" alt="">
+                </div>
+                <div class="product-body">
+                    <h3 class="product-name"><a href="@Url.Action("Details", "Product", new { id = item.product_id })">@(item.Product?.product_name)</a></h3>
+                    <h4 class="product-price"><span class="qty">@((item.quantity ?? 0))x</span>@itemPrice.ToString("C0", cultureInfo)</h4>
+                </div>
+                @* Client-handled AJAX remove button *@
+                <button type="button"
+                        class="delete cart-remove"
+                        data-cartid="@item.cart_id"
+                        data-productid="@item.product_id">
+                    <i class="fa fa-close"></i>
+                </button>
+            </div>
+        }
+    }
+</div>
+<div class="cart-summary">
+    <h5>Tổng số: @Model.Sum(m => m.quantity)</h5>
+    <h5>Tổng tiền: @Model.Sum(m => (m.quantity * (m.Product?.discount_price ?? m.Product?.price ?? 0M))).Value.ToString("C0", cultureInfo)</h5>
+</div>
+<div class="cart-btns">
+    <a href="@Url.Action("Index", "Cart")">Xem giỏ hàng</a>
+    <a href="@Url.Action("Purchase", "Cart")">Thanh toán</a>
+</div>

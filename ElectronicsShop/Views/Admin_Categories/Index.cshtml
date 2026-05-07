@@ -1,0 +1,275 @@
+﻿@model IEnumerable<ElectronicsShop.Models.Category>
+
+@{
+    ViewBag.Title = "Quản lý danh mục";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<style>
+    /* Bảng danh mục đồng bộ với style Admin_Products/Index */
+    .categories-card .card-header h5 {
+        font-weight: 700;
+        color: #0d6efd;
+    }
+
+    .categories-table thead th {
+        font-size: 15px;
+        font-weight: 700;
+        color: #0d6efd;
+        background-color: transparent;
+        border-bottom: 2px solid rgba(13,110,253,0.08);
+        vertical-align: middle;
+    }
+
+    .categories-table tbody td {
+        vertical-align: middle;
+    }
+
+    /* Các nút thao tác có kích thước bằng nhau */
+    .actions .btn {
+        min-width: 92px;
+        margin-right: 6px;
+        padding: .325rem .5rem;
+        font-size: .88rem;
+        text-align: center;
+    }
+
+    /* Thêm một chút khoảng cách và kiểu cho tên danh mục */
+    .category-name {
+        font-weight: 600;
+        color: #0b5ed7;
+    }
+
+    /* Pagination */
+    .paging {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        justify-content: flex-end;
+        margin-bottom: 12px;
+    }
+
+        .paging .page-btn {
+            padding: 6px 10px;
+            border-radius: 4px;
+            border: 1px solid #e3e6ea;
+            background: #fff;
+            cursor: pointer;
+        }
+
+            .paging .page-btn.active {
+                background: #0d6efd;
+                color: #fff;
+                border-color: #0d6efd;
+            }
+
+        .paging .page-size {
+            width: 80px;
+        }
+
+    /* sortable indicator */
+    .categories-table thead th.sortable {
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .sort-indicator {
+        margin-left: 6px;
+        font-size: 0.85em;
+        color: #6c757d;
+    }
+
+    /* Responsive nhỏ */
+    @@media (max-width: 576px) {
+        .actions .btn {
+            min-width: 72px;
+            font-size: 0.82rem;
+            padding: .25rem .4rem;
+        }
+    }
+</style>
+
+<div class="card mb-4 categories-card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Danh sách danh mục</h5>
+        <div>
+            @Html.ActionLink("Thêm mới", "Create", null, new { @class = "btn btn-sm btn-success" })
+        </div>
+    </div>
+
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle mb-0 categories-table">
+                <thead>
+                    <tr>
+                        <th class="sortable" data-sort="category_name">Danh mục <span class="sort-indicator"></span></th>
+                        <th style="width:220px">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody id="categoriesTbody">
+                    @if (Model == null || !Model.Any())
+                    {
+                        <tr>
+                            <td colspan="2" class="text-center text-muted">Không có danh mục nào</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        var rowIndex = 0;
+                        foreach (var item in Model)
+                        {
+                            rowIndex++;
+                            <tr class="data-row" data-index="@rowIndex">
+                                <td>
+                                    <div class="category-name">@Html.DisplayFor(modelItem => item.category_name)</div>
+                                </td>
+                                <td class="actions">
+                                    @Html.ActionLink("Chi tiết", "Details", new { id = item.category_id }, new { @class = "btn btn-sm btn-outline-primary" })
+                                    @Html.ActionLink("Sửa", "Edit", new { id = item.category_id }, new { @class = "btn btn-sm btn-outline-secondary" })
+                                    @Html.ActionLink("Xóa", "Delete", new { id = item.category_id }, new { @class = "btn btn-sm btn-outline-danger", onclick = "return confirm('Bạn có chắc muốn xóa danh mục này?');" })
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+        <!-- Pagination controls -->
+        <div class="paging" aria-label="Pagination controls">
+            <div>
+                <label for="catPageSize">Số hàng / trang</label>
+                <select id="catPageSize" class="form-select page-size">
+                    <option value="5">5</option>
+                    <option value="10" selected>10</option>
+                    <option value="20">20</option>
+                </select>
+            </div>
+
+            <div style="margin-left:auto; display:flex; gap:6px; align-items:center;">
+                <button id="catFirstPage" class="page-btn" type="button">&laquo; Đầu</button>
+                <button id="catPrevPage" class="page-btn" type="button">&lsaquo; Trước</button>
+                <div id="catPageNumbers" style="display:flex; gap:6px;"></div>
+                <button id="catNextPage" class="page-btn" type="button">Tiếp &rsaquo;</button>
+                <button id="catLastPage" class="page-btn" type="button">Cuối &raquo;</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // Client-side sorting + pagination for Categories
+    document.addEventListener('DOMContentLoaded', function () {
+        const tbody = document.getElementById('categoriesTbody');
+        let items = Array.from(tbody.querySelectorAll('.data-row')).map(row => {
+            const txt = (row.querySelector('td') || {}).innerText || '';
+            return {
+                row: row,
+                category_name: txt.trim().toLowerCase()
+            };
+        });
+
+        let rowsElems = items.map(i => i.row);
+        const headers = Array.from(document.querySelectorAll('.categories-table thead th.sortable'));
+        let currentSort = { key: null, dir: null };
+
+        function setSortIndicator(header, dir) {
+            headers.forEach(h => {
+                const ind = h.querySelector('.sort-indicator');
+                if (h === header) ind.textContent = dir === 'asc' ? '▲' : dir === 'desc' ? '▼' : '';
+                else ind.textContent = '';
+            });
+        }
+
+        function compareValues(a, b, key, dir) {
+            const va = a[key], vb = b[key];
+            if (va < vb) return dir === 'asc' ? -1 : 1;
+            if (va > vb) return dir === 'asc' ? 1 : -1;
+            return 0;
+        }
+
+        headers.forEach(h => {
+            h.addEventListener('click', function () {
+                const key = this.dataset.sort;
+                let dir = 'asc';
+                if (currentSort.key === key) dir = currentSort.dir === 'asc' ? 'desc' : 'asc';
+                currentSort = { key, dir };
+
+                items.sort((a, b) => compareValues(a, b, key, dir));
+                items.forEach(it => tbody.appendChild(it.row));
+                rowsElems = items.map(i => i.row);
+
+                setSortIndicator(this, dir);
+
+                currentPage = 1;
+                showPage(currentPage);
+            });
+        });
+
+        // pagination (uses rowsElems)
+        const pageSizeSelect = document.getElementById('catPageSize');
+        const pageNumbersContainer = document.getElementById('catPageNumbers');
+        const firstBtn = document.getElementById('catFirstPage');
+        const prevBtn = document.getElementById('catPrevPage');
+        const nextBtn = document.getElementById('catNextPage');
+        const lastBtn = document.getElementById('catLastPage');
+
+        let pageSize = parseInt(pageSizeSelect.value, 10) || 10;
+        let currentPage = 1;
+
+        function calculateTotalPages() {
+            return pageSize > 0 ? Math.max(1, Math.ceil(rowsElems.length / pageSize)) : 1;
+        }
+
+        function renderPageNumbers() {
+            pageNumbersContainer.innerHTML = '';
+            const totalPages = calculateTotalPages();
+            const maxButtons = 7;
+            let start = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+            let end = Math.min(totalPages, start + maxButtons - 1);
+            if (end - start + 1 < maxButtons) { start = Math.max(1, end - maxButtons + 1); }
+            for (let i = start; i <= end; i++) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'page-btn' + (i === currentPage ? ' active' : '');
+                btn.textContent = i;
+                btn.dataset.page = i;
+                btn.addEventListener('click', function () {
+                    currentPage = parseInt(this.dataset.page, 10);
+                    showPage(currentPage);
+                });
+                pageNumbersContainer.appendChild(btn);
+            }
+        }
+
+        function showPage(page) {
+            const totalPages = calculateTotalPages();
+            if (page < 1) page = 1;
+            if (page > totalPages) page = totalPages;
+            currentPage = page;
+            const startIndex = (currentPage - 1) * pageSize;
+            const endIndex = startIndex + pageSize;
+            rowsElems.forEach((r, idx) => {
+                r.style.display = (idx >= startIndex && idx < endIndex) ? '' : 'none';
+            });
+            renderPageNumbers();
+            prevBtn.disabled = currentPage === 1;
+            firstBtn.disabled = currentPage === 1;
+            nextBtn.disabled = currentPage === totalPages;
+            lastBtn.disabled = currentPage === totalPages;
+        }
+
+        pageSizeSelect.addEventListener('change', function () {
+            pageSize = parseInt(this.value, 10) || 10;
+            currentPage = 1;
+            showPage(currentPage);
+        });
+        firstBtn.addEventListener('click', function () { showPage(1); });
+        prevBtn.addEventListener('click', function () { showPage(currentPage - 1); });
+        nextBtn.addEventListener('click', function () { showPage(currentPage + 1); });
+        lastBtn.addEventListener('click', function () { showPage(calculateTotalPages()); });
+
+        // initial render
+        showPage(1);
+    });
+</script>

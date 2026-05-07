@@ -1,0 +1,77 @@
+﻿@model ElectronicsShop.Models.Order
+
+@{
+    ViewBag.Title = "Delete";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<h2>Delete</h2>
+
+<h3>Are you sure you want to delete this?</h3>
+<div>
+    <h4>Order</h4>
+    <hr />
+    <dl class="dl-horizontal">
+
+        <!-- Mã đơn -->
+        <dt>Mã đơn</dt>
+        <dd>@Model.order_id</dd>
+
+        <!-- Ngày đặt -->
+        <dt>Ngày đặt</dt>
+        <dd>@(Model.order_date?.ToString("dd/MM/yyyy HH:mm"))</dd>
+
+        <!-- Tổng tiền -->
+        <dt>Tổng tiền</dt>
+        <dd>@(Model.total_amount != null ? String.Format("{0:N0} ₫", Model.total_amount) : "-")</dd>
+
+        <!-- Trạng thái -->
+        <dt>Trạng thái</dt>
+        <dd>
+            @{
+                string statusVi = Model.status;
+
+                switch (Model.status?.ToLower())
+                {
+                    case "processing": statusVi = "Đang xử lý"; break;
+                    case "shipping": statusVi = "Đang vận chuyển"; break;
+                    case "delivered": statusVi = "Đã giao"; break;
+                    case "cancelled": statusVi = "Đã hủy"; break;
+                }
+            }
+            @statusVi
+        </dd>
+
+        <!-- Địa chỉ -->
+        <dt>Địa chỉ giao hàng</dt>
+        <dd>@Html.DisplayFor(model => model.Shipment.shipment_address)</dd>
+
+        <!-- Số lượng sản phẩm -->
+        <dt>Số lượng sản phẩm</dt>
+        <dd>
+            @(Model.Order_Items != null ? Model.Order_Items.Sum(x => x.quantity) : 0)
+        </dd>
+
+        <!-- Khách hàng (FIX đúng họ tên) -->
+        <dt>Khách hàng</dt>
+        <dd>
+            @(Model.User != null
+        ? Model.User.last_name + " " + Model.User.first_name
+        : "—")
+        </dd>
+
+        <!-- Thanh toán -->
+        <dt>Thanh toán</dt>
+        <dd>@Model.payment_method</dd>
+
+    </dl>
+
+    @using (Html.BeginForm()) {
+        @Html.AntiForgeryToken()
+
+        <div class="form-actions no-color">
+            <input type="submit" value="Delete" class="btn btn-default" /> |
+            @Html.ActionLink("Back to List", "Index")
+        </div>
+    }
+</div>

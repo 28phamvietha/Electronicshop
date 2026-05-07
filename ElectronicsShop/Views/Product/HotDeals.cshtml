@@ -1,0 +1,206 @@
+﻿@{
+    ViewBag.Title = "HotDeals";
+    Layout = "~/Views/Shared/_CustomerLayout.cshtml";
+}
+
+@model List<ElectronicsShop.Models.Product>
+
+@section Styles {
+    <style>
+        #hot-deals .product-item {
+            margin-bottom: 24px;
+        }
+
+        #hot-deals .product {
+            background: #fff;
+            border: 1px solid #eee;
+            padding: 12px;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+            transition: 0.3s;
+        }
+
+            #hot-deals .product:hover {
+                box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+                transform: translateY(-3px);
+            }
+
+        /* ẢNH */
+        #hot-deals .product-img {
+            height: 260px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+            #hot-deals .product-img img {
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+                transition: 0.3s;
+            }
+
+        #hot-deals .product:hover img {
+            transform: scale(1.05);
+        }
+
+        /* BADGE SALE */
+        #hot-deals .sale-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #D10024;
+            color: #fff;
+            padding: 6px 10px;
+            font-size: 13px;
+            font-weight: bold;
+            border-radius: 4px;
+            z-index: 10;
+        }
+
+        /* COUNTDOWN */
+        #hot-deals .countdown {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.7);
+            color: #fff;
+            padding: 5px 10px;
+            font-size: 12px;
+            border-radius: 4px;
+        }
+
+        /* NAME */
+        #hot-deals .product-name {
+            height: 48px;
+            overflow: hidden;
+        }
+
+        /* PRICE */
+        #hot-deals .product-price {
+            color: #D10024;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        #hot-deals .product-old-price {
+            text-decoration: line-through;
+            font-size: 13px;
+            color: #999;
+            margin-right: 6px;
+        }
+
+        /* ⭐ RATING */
+        #hot-deals .rating {
+            color: red;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+    </style>
+}
+
+<div class="section">
+    <div class="container">
+        <h2 style="margin-bottom:20px;">🔥 DEAL SỐC HÔM NAY</h2>
+
+        <div class="row" id="hot-deals">
+            @foreach (var item in Model)
+            {
+                var image = "default.png";
+                if (item.Product_Images != null && item.Product_Images.Any())
+                {
+                    image = item.Product_Images.First().image_url;
+                }
+
+                var percent = 0;
+                if (item.price.HasValue && item.discount_price.HasValue && item.price > item.discount_price)
+                {
+                    percent = (int)Math.Round(
+                        (item.price.Value - item.discount_price.Value) * 100 / item.price.Value
+                    );
+                }
+
+                <div class="col-lg-3 col-md-4 col-sm-6 product-item">
+                    <div class="product">
+
+                        <!-- SALE -->
+                        @if (percent > 0)
+                        {
+                            <div class="sale-badge">-@percent%</div>
+                        }
+
+                        <!-- IMG -->
+                        <div class="product-img">
+                            <a href="@Url.Action("Details", "Product", new { id = item.product_id })">
+                                <img src="@Url.Content("~/wwwroot/img/" + image)"
+                                     onerror="this.src='@Url.Content("~/wwwroot/img/default.png")'" />
+                            </a>
+
+                            <!-- COUNTDOWN 2 NGÀY -->
+                            <div class="countdown" data-time="86399">
+                                ⏰ Loading...
+                            </div>
+                        </div>
+
+                        <!-- BODY -->
+                        <div class="product-body">
+
+                            <h3 class="product-name">
+                                <a href="@Url.Action("Details", "Product", new { id = item.product_id })">
+                                    @item.product_name
+                                </a>
+                            </h3>
+
+                            <!-- GIÁ -->
+                            <div class="product-price-box">
+
+                                <!-- GIÁ GỐC -->
+                                <div class="product-old-price">
+                                    @(item.price?.ToString("N0")) đ
+                                </div>
+
+                                <!-- GIÁ KHUYẾN MẠI -->
+                                <div class="product-price">
+                                    @(item.discount_price?.ToString("N0")) đ
+                                </div>
+
+                            </div>
+
+                            <!-- ⭐ RATING -->
+                            <div class="rating">
+                                ★★★★★
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll(".countdown").forEach(el => {
+            let time = parseInt(el.getAttribute("data-time"));
+
+            const interval = setInterval(() => {
+                let days = Math.floor(time / 86400);
+                let hours = Math.floor((time % 86400) / 3600);
+                let mins = Math.floor((time % 3600) / 60);
+                let secs = time % 60;
+
+                el.innerHTML = `⏰  ${hours < 10 ? '0' : ''}${hours}:${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
+
+                time--;
+
+                if (time <= 0) {
+                    el.innerHTML = "⛔ Hết deal";
+                    clearInterval(interval);
+                }
+            }, 1000);
+        });
+    </script>
+}

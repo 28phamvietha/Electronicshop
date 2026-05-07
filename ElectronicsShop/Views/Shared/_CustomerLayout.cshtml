@@ -1,0 +1,1415 @@
+﻿@section Scripts {
+    <script>
+        try {
+            window.addEventListener("load", function () {
+                var currentPath = window.location.pathname.toLowerCase().replace(/\/$/, "");
+
+                var navLinks = document.querySelectorAll('.main-nav li a');
+                var found = false;
+
+                navLinks.forEach(function (link) {
+                    var linkPath = new URL(link.href).pathname.toLowerCase().replace(/\/$/, "");
+
+                    link.parentElement.classList.remove('active');
+
+                    if (currentPath === linkPath || (currentPath !== "" && currentPath.includes(linkPath) && linkPath.length > 5)) {
+                        link.parentElement.classList.add('active');
+                        found = true;
+                    }
+                });
+
+                if (!found || currentPath.endsWith("hocrest_ful") || currentPath.includes("home/index")) {
+                    var firstLi = document.querySelector('.main-nav li:first-child');
+                    if (firstLi) {
+                        navLinks.forEach(l => l.parentElement.classList.remove('active'));
+                        firstLi.classList.add('active');
+                    }
+                }
+            });
+        } catch (e) {
+            console.error("Lỗi script focus menu: ", e);
+        }
+    </script>
+}
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            font-family: "Segoe UI", Arial, sans-serif;
+        }
+                .main-nav li.active a {
+                    color: #D10024 !important;
+                    background-color: transparent !important;
+                    font-weight: bold;
+                }
+
+                    .main-nav li.active a::after {
+                        content: "";
+                        display: block;
+                        width: 100%;
+                        height: 2px;
+                        background-color: #D10024;
+                        position: absolute;
+                        bottom: 0;
+                        left: 0;
+                    }
+
+                .main-nav li a {
+                    position: relative; /* Bắt buộc để căn chỉnh đường gạch chân */
+                    padding-bottom: 5px;
+                }
+
+                /* Chat widget styles */
+                /* ===== NÚT CHAT ===== */
+        .chat-bubble {
+            position: fixed;
+            right: 22px;
+            bottom: 22px;
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: #15161D;
+            border: 2px solid #D10024;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+            cursor: pointer;
+            z-index: 1200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 5px;
+            transition: 0.2s;
+        }
+        .chat-bubble:hover {
+            transform: scale(1.1);
+        }
+        .chat-bubble img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        /* ===== POPUP ===== */
+        .chat-popup {
+            position: fixed;
+            right: 22px;
+            bottom: 90px;
+            width: 360px;
+            height: 460px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            z-index: 1199;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .chat-popup.open {
+            display: flex;
+        }
+
+        /* ===== HEADER ===== */
+        .chat-header {
+            padding: 10px 14px;
+            background: #15161D;
+            color: #fff;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #D10024;
+        }
+        .chat-header img {
+            border-radius: 50%;
+            border: 2px solid #D10024;
+        }
+        .chat-header .close-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        /* ===== CONTENT ===== */
+        .chat-content {
+            padding: 12px;
+            background: #f7fafc;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        /* ===== MESSAGE ===== */
+        .chat-message {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+            .chat-message .meta {
+                display: none;
+            }
+
+        /* avatar */
+        .chat-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #15161D;
+            padding: 2px;
+            border: 2px solid #D10024;
+            object-fit: cover;
+        }
+
+        /* nội dung */
+        .chat-bubble-wrap {
+            display: flex;
+            flex-direction: column;
+            max-width: 80%;
+        }
+
+        /* text chung */
+        .chat-message .text {
+            background: #fff;
+            padding: 10px 14px;
+            border-radius: 16px;
+            display: inline-block;
+            max-width: 100%; /* ❌ bỏ 75% */
+            font-style: normal;
+            font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+            font-style: normal;
+            transform: none;
+            letter-spacing: normal;
+            word-spacing: normal;
+            white-space: pre-wrap;
+            word-break: keep-all; /* ⬅️ KHÔNG cho bẻ chữ */
+            overflow-wrap: break-word;
+            line-height: 1.4;
+        }
+
+        /* ===== BOT ===== */
+        .chat-message.assistant {
+            justify-content: flex-start;
+        }
+        .chat-message.assistant .text {
+            background: #fff;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+
+        /* 2 tin liên tiếp */
+        .chat-message.assistant:first-of-type .chat-avatar {
+            visibility: hidden;
+        }
+        .chat-message.assistant + .chat-message.assistant {
+            margin-top: 2px;
+        }
+
+        /* bo góc giống messenger */
+        .chat-message.assistant:first-of-type .text {
+            border-radius: 16px 16px 6px 16px;
+        }
+        .chat-message.assistant + .chat-message.assistant .text {
+            border-radius: 16px 16px 16px 6px;
+        }
+
+        /* ===== USER ===== */
+        .chat-message.user {
+            justify-content: flex-end;
+        }
+            .chat-message.user .chat-bubble-wrap {
+                align-items: flex-end;
+            }
+            .chat-message.user .text {
+                background: #D10024;
+                color: #fff;
+                
+            }
+        .chat-message.user .chat-avatar {
+            display: none;
+        }
+
+        /* ===== INPUT (QUAN TRỌNG) ===== */
+        .chat-input {
+            padding: 10px;
+            display: flex;
+            gap: 8px;
+            border-top: 1px solid #eee;
+            align-items: flex-end;
+        }
+
+        /* textarea giống messenger */
+            .chat-input textarea {
+                flex: 1;
+                min-height: 36px;
+                max-height: 110px;
+                padding: 8px 10px;
+                border: 1px solid #e6edf3;
+                border-radius: 12px;
+                outline: none;
+                font-size: 14px;
+                line-height: 1.4;
+                resize: none !important; /* ❌ tắt kéo */
+                overflow-y: auto; /* chỉ scroll khi >5 dòng */
+
+                -webkit-appearance: none; /* 🔥 fix Chrome/Edge */
+                -moz-appearance: none;
+                scrollbar-width: none; /* Firefox */
+            }
+
+                .chat-input textarea::-webkit-scrollbar {
+                    display: none; /* Chrome */
+                }
+        .chat-input textarea:focus {
+            border-color: #D10024;
+        }
+
+        /* nút gửi */
+        .chat-input button {
+            height: 38px;
+            padding: 0 14px;
+            border-radius: 50px;
+            background: #D10024;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+
+        /* loading */
+        .chat-loading {
+            font-style: italic;
+            color: #888;
+        }
+
+        /* responsive */
+        @@media (max-width: 480px) {
+            .chat-popup {
+                width: 320px;
+                height: 420px;
+                right: 12px;
+                bottom: 78px;
+            }
+            .chat-bubble {
+                right: 12px;
+                bottom: 12px;
+            }
+        }
+
+                #toast-box {
+                    position: fixed;
+                    top: 100px;
+                    right: 20px;
+                    z-index: 99999999;
+                }
+
+                .toast {
+                    background: #333;
+                    color: #fff;
+                    padding: 12px 16px;
+                    margin-bottom: 10px;
+                    border-radius: 5px;
+                    opacity: 0;
+                    transform: translateX(100%);
+                    transition: all 0.4s ease;
+                    display: block !important;
+                }
+
+                    .toast.show {
+                        opacity: 1;
+                        transform: translateX(0);
+                    }
+
+                    .toast.success {
+                        background: #28a745;
+                    }
+
+                    .toast.error {
+                        background: #dc3545;
+                    }
+
+                /* ===== FOOTER MAIN ===== */
+        #footer {
+            background: linear-gradient(135deg, #0f172a, #111827);
+            color: #9ca3af;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            padding-top: 40px;
+        }
+
+        /* ===== GRID 4 CỘT ĐỀU NHAU ===== */
+        .footer-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-start; /* 👈 fix cột thò thụt */
+        }
+
+        .footer-row > div {
+            flex: 1;
+            min-width: 250px;
+            padding: 0 20px;
+            display: flex;
+        }
+
+        /* ===== BOX MỖI CỘT ===== */
+        .footer {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            width: 100%;
+            gap: 12px;
+        }
+
+        /* ===== TITLE ===== */
+        .footer .footer-title {
+            color: #fff;
+            text-transform: uppercase;
+            font-size: 15px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            position: relative;
+            padding-bottom: 10px;
+            min-height: 50px; /* 👈 giúp title thẳng hàng */
+            display: flex;
+            align-items: flex-end;
+        }
+
+        .footer .footer-title::after {
+            content: "";
+            width: 30px;
+            height: 2px;
+            background: #3b82f6;
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            border-radius: 2px;
+        }
+
+        /* ===== TEXT CỘT 1 ===== */
+        .footer p {
+            font-size: 14px;
+            line-height: 1.6;
+            max-width: 95%;
+        }
+
+        /* 👉 nếu muốn đều tuyệt đối thì bật cái này */
+        .footer p {
+            display: -webkit-box;
+            -webkit-line-clamp: 4; /* giới hạn 4 dòng */
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* ===== LIST ===== */
+        .footer-links {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .footer-links li {
+            margin-bottom: 10px;
+        }
+
+        /* ===== LINK ===== */
+        .footer-links li a {
+            color: #9ca3af;
+            text-decoration: none;
+            transition: all 0.25s ease;
+        }
+
+        .footer-links li a:hover {
+            color: #fff;
+            transform: translateX(4px);
+        }
+
+        /* ===== ICON ===== */
+        .footer-links li i {
+            margin-right: 10px;
+            color: #ef4444;
+            font-size: 13px;
+        }
+
+        /* ===== BOTTOM FOOTER ===== */
+        #bottom-footer {
+            background: linear-gradient(90deg, #1E1F29, #2C2F40);
+            margin-top: 40px;
+            padding: 20px 0;
+            text-align: center;
+        }
+
+        /* ===== PAYMENT ===== */
+        .footer-payments li {
+            display: inline-block;
+            margin: 0 8px;
+        }
+
+        .footer-payments li a {
+            color: #fff;
+            font-size: 34px;
+            opacity: 0.85;
+            transition: 0.3s;
+        }
+
+        .footer-payments li a:hover {
+            opacity: 1;
+        }
+                .footer-payments li a i {
+                    filter: brightness(1.5);
+                }
+
+        /* ===== COPYRIGHT ===== */
+                .copyright a {
+                    color: #fff;
+                    font-weight: 600;
+                    text-decoration: none;
+                    transition: 0.3s;
+                }
+
+                    .copyright a:hover {
+                        color: #3b82f6;
+                        text-shadow: 0 0 8px rgba(59,130,246,0.6);
+                    }
+
+        /* ===== RESPONSIVE ===== */
+                @@media (max-width: 768px) {
+                    .footer-row {
+                        flex-direction: column;
+                    }
+
+                        .footer-row > div {
+                            padding: 10px 0;
+                        }
+                }
+                .footer-payments {
+                    background: rgba(255,255,255,0.05);
+                    padding: 12px 20px;
+                    border-radius: 10px;
+                    display: flex; /* 👈 quan trọng */
+                    justify-content: center;
+                    flex-wrap: wrap; /* 👈 tránh bị tràn */
+                    gap: 12px;
+                }
+
+                    /* từng icon */
+                    .footer-payments li {
+                        display: inline-block;
+                        margin: 0 10px;
+                    }
+
+                        /* icon chính */
+                        .footer-payments li a {
+                            font-size: 38px; /* to hơn */
+                            color: #ffffff; /* trắng sáng */
+                            opacity: 0.9;
+                            transition: all 0.3s ease;
+                        }
+
+                            /* hover cho đẹp */
+                            .footer-payments li a:hover {
+                                color: #3b82f6; /* xanh highlight */
+                                transform: scale(1.2); /* phóng to nhẹ */
+                                opacity: 1;
+                            }
+
+                            /* thêm glow nhẹ cho nổi */
+                            .footer-payments li a i {
+                                text-shadow: 0 0 10px rgba(255,255,255,0.5);
+                                filter: brightness(1.8); /* 👈 sáng hơn */
+                            }
+                .footer-bottom {
+                    display: flex;
+                    flex-direction: column; /* 👈 tách thành 2 dòng */
+                    align-items: center;
+                    gap: 12px;
+                }
+    </style>
+
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <link rel="icon" type="image/png" href="~/wwwroot/img/logo.png" />
+    <title>Electronics Shop</title>
+
+    <!-- Google font -->
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,500,700" rel="stylesheet">
+
+    <!-- Bootstrap -->
+    <link type="text/css" rel="stylesheet" href="~/wwwroot/css/bootstrap.min.css" />
+
+
+
+    <!-- Slick -->
+    <link type="text/css" rel="stylesheet" href="~/wwwroot/css/slick.css" />
+    <link type="text/css" rel="stylesheet" href="~/wwwroot/css/slick-theme.css" />
+
+    <!-- nouislider -->
+    <link type="text/css" rel="stylesheet" href="~/wwwroot/css/nouislider.min.css" />
+
+    <!-- Font Awesome Icon -->
+    <link rel="stylesheet" href="~/wwwroot/css/font-awesome.min.css">
+
+    <!-- Custom stlylesheet -->
+    <link type="text/css" rel="stylesheet" href="~/wwwroot/css/style.css" />
+
+    @RenderSection("Styles", required: false)
+</head>
+
+<body>
+    @* Prepare dynamic cart + wishlist data for header *@
+    @{
+        var cartItems = new List<ElectronicsShop.Models.Cart>();
+        int cartCount = 0;
+        decimal cartSubtotal = 0M;
+
+        var wishlistItems = new List<ElectronicsShop.Models.Wishlist>();
+        int wishlistCount = 0;
+
+        if (Session["UserId"] != null)
+        {
+            try
+            {
+                int userId = (int)Session["UserId"];
+                // Cart items
+                cartItems = new ElectronicsShop.Controllers.CartController().GetCartItemsByUserId(userId) ?? new List<ElectronicsShop.Models.Cart>();
+                cartCount = cartItems.Sum(ci => (ci.quantity ?? 0));
+                foreach (var ci in cartItems)
+                {
+                    var price = ci.Product?.discount_price ?? ci.Product?.price ?? 0M;
+                    cartSubtotal += (ci.quantity ?? 0) * price;
+                }
+
+                // Wishlist items (HomeController contains GetWishListItemsByUserId)
+                wishlistItems = new ElectronicsShop.Controllers.WishlistController().GetWishListItemsByUserId(userId) ?? new List<ElectronicsShop.Models.Wishlist>();
+                wishlistCount = wishlistItems.Count;
+            }
+            catch
+            {
+                // Fail silently to avoid breaking rendering in layout
+                cartItems = new List<ElectronicsShop.Models.Cart>();
+                cartCount = 0;
+                cartSubtotal = 0M;
+                wishlistItems = new List<ElectronicsShop.Models.Wishlist>();
+                wishlistCount = 0;
+            }
+        }
+    }
+
+    <!-- HEADER -->
+    <header>
+        <!-- TOP HEADER -->
+        <div id="top-header">
+            <div class="container">
+                <ul class="header-links pull-left">
+                    <li><a href="#"><i class="fa fa-phone"></i> (+84)398857268</a></li>
+                    <li><a href="#"><i class="fa fa-envelope-o"></i> 28vietha@gmail.com</a></li>
+                    <li>
+                        <a href="#">
+                            <i class="fa fa-map-marker"></i> 85 Ngõ 70 Văn Trì, Minh Khai, Bắc Từ Liêm, Hà
+                            Nội
+                        </a>
+                    </li>
+                </ul>
+                <ul class="header-links pull-right">
+
+                    @if (Session["UserName"] != null)
+                    {
+
+
+                        <li>
+                            <a href="@Url.Action("ShipmentManagement", "Account")">
+                                <i class="fa fa-user-o"></i>
+                                <span style="color:#F8BD14; font-weight:700">
+                                    @Session["UserName"]
+                                </span>
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="@Url.Action("Logout", "Account")">
+                                <i class="fa fa-sign-out"></i> Đăng xuất
+                            </a>
+                        </li>
+                    }
+                    else
+                    {
+                        <li>
+                            <a href="@Url.Action("Login", "Account")">
+                                <i class="fa fa-user-o"></i> Đăng nhập
+                            </a>
+                        </li>
+                    }
+
+                </ul>
+            </div>
+        </div>
+        <!-- /TOP HEADER -->
+        <!-- MAIN HEADER -->
+        <div id="header">
+            <!-- container -->
+            <div class="container">
+                <!-- row -->
+                <div class="row">
+                    <!-- LOGO -->
+                    <div class="col-md-3">
+                        <div class="header-left" style="display:flex; align-items:center; gap:10px;">
+                            <div class="header-logo">
+                                <a href="@Url.Action("Index", "Home")" class="logo">
+                                    <img src="~/wwwroot/img/logo.png" width="140" alt="">
+                                </a>
+                            </div>
+                            <div class="menu-wrapper">
+                                <button id="menuToggle" class="menu-btn">
+                                    ☰ Danh mục
+                                </button>
+                                <div id="categoryMenu" class="category-popup">
+                                    <div class="category-sidebar-popup">
+
+                                        <ul class="category-menu">
+                                            <li class="has-sub">
+                                                <a href="@Url.Action("ProductsByCategory", "Product", new { categoryId = 1 })">
+                                                    📱 Điện thoại   <span class="arrow">></span>
+                                                </a>
+
+                                                <div class="sub-menu">
+                                                    <div>
+                                                        <h4>Thương hiệu</h4>
+                                                        <a href="@Url.Action("ProductsByCategory", "Product", new { categoryId = 1, brand = "Apple" })">iPhone</a>
+                                                        <a href="@Url.Action("ProductsByCategory", "Product", new { categoryId = 1, brand = "Samsung" })">Samsung</a>
+                                                        <a href="@Url.Action("ProductsByCategory", "Product", new { categoryId = 1, brand = "Xiaomi" })">Xiaomi</a>
+                                                        <a href="@Url.Action("ProductsByCategory", "Product", new { categoryId = 1, brand = "Oppo" })">Oppo</a>
+                                                        <a href="@Url.Action("ProductsByCategory", "Product", new { categoryId = 1, brand = "Realme" })">Realme</a>
+                                                        <a href="@Url.Action("ProductsByCategory", "Product", new { categoryId = 1, brand = "ViVo" })">ViVo</a>
+                                                    </div>
+
+                                                    <div>
+                                                        <h4>Sản phẩm HOT</h4>
+                                                        <a href="@Url.Action("ProductsByCategory", "Product", new { categoryId = 1, type = "iPhone 17" })">iPhone 17 Series</a>
+                                                        <a href="@Url.Action("ProductsByCategory", "Product", new { categoryId = 1, type = "Galaxy S26" })"> Galaxy S26 Series</a>
+                                                        <a href="@Url.Action("ProductsByCategory", "Product", new { categoryId = 1, type = "Xiaomi 17" })">Xiaomi 17 Ultra</a>
+                                                    </div>
+                                                </div>
+                                            </li>
+                                            <li class="has-sub">
+                                                <a href="@Url.Action("ProductsByCategory", "Product", new { categoryId = 2 })">
+                                                    💻 Laptop           <span class="arrow">></span>
+                                                </a>
+
+                                                <div class="sub-menu">
+                                                    <div>
+                                                        <h4>Thương hiệu</h4>
+                                                        <a href="@Url.Action("ProductsByCategory", "Product", new { categoryId = 2, brand = "Dell" })">Dell</a>
+                                                        <a href="@Url.Action("ProductsByCategory", "Product", new { categoryId = 2, brand = "Apple" })">Apple</a>
+                                                        <a href="@Url.Action("ProductsByCategory", "Product", new { categoryId = 2, brand = "Asus" })">Asus</a>
+                                                        <a href="@Url.Action("ProductsByCategory", "Product", new { categoryId = 2, brand = "HP" })">HP</a>
+                                                        <a href="@Url.Action("ProductsByCategory", "Product", new { categoryId = 2, brand = "Lenovo" })">Lenovo</a>
+
+                                                    </div>
+                                                    <div>
+                                                        <h4>Sản phẩm HOT</h4>
+                                                        <a href="@Url.Action("ProductsByCategory", "Product", new { categoryId = 2, type = "MacBook air" })">MacBook air</a>
+                                                        <a href="@Url.Action("ProductsByCategory", "Product", new { categoryId = 2, type = "Dell inspiron" })">Dell inspiron</a>
+                                                    </div>
+                                                </div>
+                                            </li>
+                                            <li class="has-sub">
+                                                <a href="@Url.Action("ProductsByCategory", "Product", new { categoryId = 3 })">
+                                                    📷 Máy ảnh  <span class="arrow">></span>
+                                                </a>
+
+                                                <div class="sub-menu">
+                                                    <div>
+                                                        <h4>Thương hiệu</h4>
+                                                        <a href="@Url.Action("ProductsByCategory", "Product", new { categoryId = 3, brand = "Sony" })">Sony</a>
+                                                        <a href="@Url.Action("ProductsByCategory", "Product", new { categoryId = 3, brand = "Canon" })">Canon</a>
+                                                        <a href="@Url.Action("ProductsByCategory", "Product", new { categoryId = 3, brand = "Fujifil" })">Fujifilm</a>
+                                                        <a href="@Url.Action("ProductsByCategory", "Product", new { categoryId = 3, brand = "Nikon" })">Nikon</a>
+
+                                                    </div>
+
+                                                    <div>
+                                                        <h4>Sản phẩm HOT</h4>
+                                                        <a href="@Url.Action("ProductsByCategory", "Product", new { categoryId = 3, type = "Nikon Zf Body" })">Nikon ZF body</a>
+                                                        <a href="@Url.Action("ProductsByCategory", "Product", new { categoryId = 3, type = "Fujifilm X-S20" })">Fujifilm X-S20</a>
+
+
+                                                    </div>
+                                                </div>
+
+                                            </li>
+                                            <li class="has-sub">
+                                                <a href="@Url.Action("ProductsByCategory", "Product", new { categoryId = 4 })">
+                                                    🎧 Phụ kiện        <span class="arrow">></span>
+                                                </a>
+                                                <div class="sub-menu">
+                                                    <div>
+                                                        <h4>Thương hiệu</h4>
+                                                        <a href="@Url.Action("ProductsByCategory", "Product", new { categoryId = 4, brand = "Apple" })">Apple</a>
+                                                        <a href="@Url.Action("ProductsByCategory", "Product", new { categoryId = 4, brand = "Samsung" })">Samsung</a>
+                                                        <a href="@Url.Action("ProductsByCategory", "Product", new { categoryId = 4, brand = "Xiaomi" })">Xiaomi</a>
+                                                        <a href="@Url.Action("ProductsByCategory", "Product", new { categoryId = 4, brand = "Oppo" })">Oppo</a>
+                                                    </div>
+
+                                                    <div>
+                                                        <h4>Loại phụ kiện</h4>
+                                                        <a href="@Url.Action("ProductsByCategory", "Product", new { categoryId = 4, type = "Bluetooth" })">Tai nghe không dây</a>
+                                                        <a href="@Url.Action("ProductsByCategory", "Product", new { categoryId = 4, type = "Chụp tai" })">Tai nghe chụp tai</a>
+                                                        <a href="@Url.Action("ProductsByCategory", "Product", new { categoryId = 4, type = "Pin" })">Pin sạc dự phòng</a>
+                                                        <a href="@Url.Action("ProductsByCategory", "Product", new { categoryId = 4, type = "Cáp sạc" })">Cáp sạc</a>
+                                                    </div>
+                                                </div>
+                                            </li>
+                                            @*@<li class="has-sub">
+                                                    <a href="@Url.Action("Index", "Home")#hot-deal">🔥 Khuyến mãi</a>
+                                                </li>*@
+                                        </ul>
+
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- /LOGO -->
+                    <!-- SEARCH BAR -->
+                    <div class="col-md-6">
+                        <div class="header-search">
+                            <form action="@Url.Action("Search", "Product")" method="get">
+
+                                <div class="search-box">
+                                    <input class="input"
+                                           id="searchBox"
+                                           type="text"
+                                           name="query"
+                                           value="@ViewBag.Query"
+                                           placeholder="Bạn muốn tìm gì..." />
+
+                                    <!-- NÚT KÍNH LÚP TRONG Ô -->
+                                    <button type="submit" class="search-btn">
+                                        <i class="fa fa-search"></i>
+                                    </button>
+                                </div>
+
+                            </form>
+                            <!-- DROPDOWN GỢI Ý -->
+                            <div id="searchSuggest" class="search-suggest">
+                                <div class="suggest-title">Từ khóa nổi bật</div>
+                                <div class="suggest-list">
+                                    <span class="suggest-item">iPhone 17 Series</span>
+                                    <span class="suggest-item">iPhone 16 Series</span>
+                                    <span class="suggest-item">iPhone 15 Series</span>
+                                    <span class="suggest-item">Galaxy S25 Series</span>
+                                    <span class="suggest-item">Galaxy Z7 Series</span>
+                                    <span class="suggest-item">Galaxy S26 Ultra</span>
+                                    <span class="suggest-item">Galaxy Z Fold7</span>
+                                    <span class="suggest-item">Xiaomi 17 Ultra</span>
+
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- /SEARCH BAR -->
+                    <!-- ACCOUNT -->
+                    <div class="col-md-3 clearfix">
+                        <div class="header-ctn">
+                            <!-- Wishlist -->
+                            <div class="dropdown" id="wishlist-dropdown">
+                                <a class="dropdown-toggle" data-toggle="dropdown" aria-expanded="true">
+                                    <i class="fa fa-heart-o"></i>
+                                    <span class="text-white">Yêu thích</span>
+                                    <div class="qty wishlist-count">@wishlistCount</div>
+                                </a>
+                                <div class="cart-dropdown">
+                                    @Html.Partial("_WishlistItems", wishlistItems)
+                                </div>
+                            </div>
+                            <!-- /Wishlist -->
+                            <!-- Cart -->
+                            <div class="dropdown" id="cart-dropdown">
+                                <a class="dropdown-toggle" data-toggle="dropdown" aria-expanded="true">
+                                    <i class="fa fa-shopping-cart"></i>
+                                    <span class="text-white">Giỏ hàng</span>
+                                    <div class="qty cart-count">@cartCount</div>
+                                </a>
+                                <div class="cart-dropdown">
+                                    @Html.Partial("_CartItems", cartItems)
+                                </div>
+                            </div>
+                            <!-- /Cart -->
+                            <!-- Menu Toogle -->
+                            <div class="menu-toggle">
+                                <a href="#">
+                                    <i class="fa fa-bars"></i>
+                                    <span>Menu</span>
+                                </a>
+                            </div>
+                            <!-- /Menu Toogle -->
+                        </div>
+                    </div>
+                    <!-- /ACCOUNT -->
+                </div>
+                <!-- row -->
+
+
+            </div>
+            <!-- container -->
+        </div>
+        <!-- /MAIN HEADER -->
+    </header>
+    <!-- /HEADER -->
+    <!-- NAVIGATION -->
+    <nav id="navigation">
+        <!-- container -->
+        <div class="container">
+            <!-- responsive-nav -->
+            <div id="responsive-nav">
+                <!-- NAV -->
+                @{
+                    // Lấy tên Controller và Action hiện tại từ hệ thống
+                    var controller = ViewContext.RouteData.Values["Controller"]?.ToString();
+                    var action = ViewContext.RouteData.Values["Action"]?.ToString();
+                }
+                @*<ul class="main-nav nav navbar-nav">
+                        <li class="@(controller == "Home" && action == "Index" ? "active" : "")">
+                            <a href="@Url.Action("Index", "Home")">Trang chủ</a>
+                        </li>
+
+                        <li class="@(action == "Categories" ? "active" : "")">
+                            <a href="@Url.Action("Categories", "Product")">Danh mục</a>
+                        </li>
+
+                        <li>
+                            <a href="@Url.Action("Index", "Home")#hot-deal">Ưu đãi lớn</a>
+                        </li>
+
+                    </ul>  @foreach (var category in ViewBag.Categories)
+                    {
+                        // Kiểm tra nếu đang ở đúng trang danh mục này dựa trên QueryString
+                        var isCurrentCat = Context.Request.QueryString["categoryId"] == category.category_id.ToString();
+                        <li class="@(isCurrentCat ? "active" : "")">
+                            <a href="@Url.Action("ProductsByCategory", "Product", new { categoryId = category.category_id })">
+                                @category.category_name
+                            </a>
+                        </li>
+                    }*@
+                <!-- /NAV  -->
+                <!-- /NAV -->
+            </div>
+            <!-- /responsive-nav -->
+        </div>
+        <!-- /container -->
+    </nav>
+    <!-- /NAVIGATION -->
+    <!-- SECTION -->
+    @RenderBody()
+    <!-- SECTION -->
+    <!-- FOOTER -->
+    <footer id="footer">
+        <!-- top footer -->
+        <div class="section">
+            <!-- container -->
+            <div class="container">
+                <!-- row -->
+                <div class="row footer-row">
+                    <div class="col-md-3 col-xs-6">
+                        <div class="footer text-white">
+                            <h3 class="footer-title">Về chúng tôi</h3>
+                            <p>
+                                Hệ thống bán lẻ công nghệ uy tín: Điện thoại - Laptop - Máy ảnh - Phụ kiện. Cam kết sản phẩm chính hãng 100%, bảo hành chuẩn quốc tế và hỗ trợ kỹ thuật trọn đời.
+                            </p>
+                            <ul class="footer-links">
+                                <li>
+                                    <a href="#">
+                                        <i class="fa fa-map-marker"></i>Số 85 ngõ 70 Văn Trì, Minh Khai, Bắc Từ
+                                        Liêm, Hà Nội
+                                    </a>
+                                </li>
+                                <li><a href="#"><i class="fa fa-phone"></i>(+84)398857268</a></li>
+                                <li><a href="#"><i class="fa fa-envelope-o"></i>28vietha@gmail.com</a></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3 col-xs-6">
+                        <div class="footer">
+                            <h3 class="footer-title">Danh mục</h3>
+                            <ul class="footer-links">
+                                <li><a href="#">Ưu đãi lớn</a></li>
+                                <li><a href="#">Laptops</a></li>
+                                <li><a href="#">Điện thoại</a></li>
+                                <li><a href="#">Máy ảnh</a></li>
+                                <li><a href="#">Phụ kiện</a></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="clearfix visible-xs"></div>
+
+                    <div class="col-md-3 col-xs-6">
+                        <div class="footer">
+                            <h3 class="footer-title">Thông tin</h3>
+                            <ul class="footer-links">
+                                <li><a href="#">Về chúng tôi</a></li>
+                                <li><a href="#">Liên hệ</a></li>
+                                <li><a href="#">Chính sách bảo mật</a></li>
+                                <li><a href="#">Đổi trả hàng</a></li>
+                                <li><a href="#">Điều khoản và chính sách</a></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3 col-xs-6">
+                        <div class="footer">
+                            <h3 class="footer-title">Dịch vụ</h3>
+                            <ul class="footer-links">
+                                <li><a href="#">Tài khoản của tôi</a></li>
+                                <li><a href="#">Xem giỏ hàng</a></li>
+                                <li><a href="#">Danh sách yêu thích</a></li>
+                                <li><a href="#">Theo dõi đơn hàng</a></li>
+                                <li><a href="#">Hỗ trợ</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <!-- /row -->
+            </div>
+            <!-- /container -->
+        </div>
+        <!-- /top footer -->
+        <!-- bottom footer -->
+        <div id="bottom-footer" class="section">
+            <div class="container">
+                <!-- row -->
+                <div class="row">
+                    <div class="col-md-12 text-center">
+                        <ul class="footer-payments">
+                            <li><a href="#"><i class="fa fa-cc-visa { color: #1a1f71; }"></i></a></li>
+                            <li><a href="#"><i class="fa fa-credit-card { color: #eb001b; }"></i></a></li>
+                            <li><a href="#"><i class="fa fa-cc-paypal { color: #003087; }"></i></a></li>
+                            <li><a href="#"><i class="fa fa-cc-mastercard { color: #2e77bc; }"></i></a></li>
+                            <li><a href="#"><i class="fa fa-cc-discover { color: #ff6000; }"></i></a></li>
+                            <li><a href="#"><i class="fa fa-cc-amex"></i></a></li>
+                        </ul>
+                        <span class="copyright">
+                            <!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
+                            &copy;
+                            <script>
+                                document.write(new Date().getFullYear());
+                            </script> All Rights Reserved by <a href="https://github.com/phamvietha">phamvietha</a>
+                            <!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
+                        </span>
+                    </div>
+                </div>
+                <!-- /row -->
+            </div>
+            <!-- /container -->
+        </div>
+        <!-- /bottom footer -->
+    </footer>
+    <!-- /FOOTER -->
+    <!-- Chat widget markup -->
+
+    <button id="chatToggle" class="chat-bubble" title="Trợ lý AI">
+        <img src="/wwwroot/img/logo.png" />
+    </button>
+
+    <div id="chatPopup" class="chat-popup" aria-hidden="true" role="dialog" aria-label="Trợ lý AI">
+        <div class="chat-header">
+            <div style="display:flex;align-items:center;gap:8px;">
+                <img src="/wwwroot/img/logo.png"
+                     style="width:36px;height:36px;border-radius:50%;">
+                <span>Electronics Shop</span>
+            </div>
+            <button class="close-btn" id="chatClose">&times;</button>
+        </div>
+        <div id="chatContent" class="chat-content" role="log" aria-live="polite"></div>
+        <div class="chat-input">
+            <textarea id="chatMessage" rows="1" placeholder="Gõ câu hỏi..."></textarea>
+            <button id="chatSend" type="button">Gửi</button>
+        </div>
+    </div>
+
+
+
+    <!-- jQuery Plugins -->
+    <script src="~/wwwroot/js/jquery.min.js"></script>
+    <script src="~/wwwroot/js/bootstrap.min.js"></script>
+    <script src="~/wwwroot/js/slick.min.js"></script>
+    <script src="~/wwwroot/js/nouislider.min.js"></script>
+    <script src="~/wwwroot/js/jquery.zoom.min.js"></script>
+    <script src="~/wwwroot/js/main.js"></script>
+    <script src="@Url.Content("~/wwwroot/js/wishlist.js")"></script>
+    <script src="@Url.Content("~/wwwroot/js/cart.js")"></script>
+    <div style="display:none">
+        @Html.AntiForgeryToken()
+    </div>
+    <script>
+        window.wishlistAddUrl = '@Url.Action("Add", "Wishlist")';
+        window.wishlistLoginUrl = '@Url.Action("Login", "Account")';
+        window.cartAddUrl = '@Url.Action("Add", "Cart")';
+        window.cartRemoveUrl = '@Url.Action("Remove", "Cart")';
+        window.cartLoginUrl = '@Url.Action("Login", "Account")';
+    </script>
+
+    <script>
+        (function () {
+            // Elements
+            var toggle = document.getElementById('chatToggle');
+            var popup = document.getElementById('chatPopup');
+            var closeBtn = document.getElementById('chatClose');
+            var sendBtn = document.getElementById('chatSend');
+            var input = document.getElementById('chatMessage');
+            input.addEventListener("input", function () {
+                this.style.height = "auto";
+                this.style.height = this.scrollHeight + "px";
+
+                if (this.scrollHeight > 120) {
+                    this.style.height = "120px"; // max ~5 dòng
+                }
+            });
+            var content = document.getElementById('chatContent');
+
+            var chatUrl = '@Url.Action("Send", "Chat")';
+            // get anti-forgery token value if present
+            var afElem = document.querySelector('input[name="__RequestVerificationToken"]');
+            var afToken = afElem ? afElem.value : null;
+
+            let hasWelcomed = false;
+            function openPopup() {
+                popup.classList.add('open');
+                popup.setAttribute('aria-hidden', 'false');
+                input.focus();
+                if (!hasWelcomed) {
+                    appendMessage(
+                        'Trợ lý',
+                        'Xin chào Anh/Chị! Em là trợ lý AI của ElectronicsShop 😊',
+                        'assistant'
+                    );
+
+                    // giả lập đang nhập
+                    let typing = appendLoading();
+
+                    setTimeout(() => {
+                        content.removeChild(typing);
+
+                        appendMessage(
+                            'Trợ lý',
+                            'Em rất sẵn lòng hỗ trợ Anh/Chị! 😊',
+                            'assistant'
+                        );
+                    }, 1000);
+
+                    hasWelcomed = true;
+                }
+            }
+            function closePopup() {
+                popup.classList.remove('open');
+                popup.setAttribute('aria-hidden', 'true');
+                toggle.focus();
+            }
+
+            function appendMessage(who, text, cssClass) {
+                var wrap = document.createElement('div');
+                wrap.className = 'chat-message ' + (cssClass || '');
+
+                // avatar (chỉ bot mới có)
+                var avatar = document.createElement('img');
+                avatar.className = 'chat-avatar';
+                avatar.src = '/wwwroot/img/logo.png'; // 👉 đường dẫn logo của bạn   ~/wwwroot/img/logo.png
+
+                var contentWrap = document.createElement('div');
+                contentWrap.className = 'chat-bubble-wrap';
+
+                var meta = document.createElement('div');
+                meta.className = 'meta';
+                if (cssClass === 'assistant') {
+                    meta.style.display = 'none'; // ẩn "Trợ lý"
+                } else {
+                    meta.textContent = who;
+                }
+
+                var txt = document.createElement('div');
+                txt.className = 'text';
+                txt.textContent = text;
+
+                // nếu là bot → có avatar
+                if (cssClass === 'assistant') {
+                    wrap.appendChild(avatar);
+                }
+
+                contentWrap.appendChild(meta);
+                contentWrap.appendChild(txt);
+                wrap.appendChild(contentWrap);
+
+                content.appendChild(wrap);
+                content.scrollTop = content.scrollHeight;
+            }
+
+            function appendLoading() {
+                var l = document.createElement('div');
+                l.className = 'chat-message loading';
+                l.innerHTML = '<div class="chat-loading">Đang xử lý...</div>';
+                content.appendChild(l);
+                content.scrollTop = content.scrollHeight;
+                return l;
+            }
+
+            async function sendMessage() {
+                var msg = input.value.trim();
+                if (!msg) return;
+                appendMessage('Bạn', msg, 'user');
+                input.value = '';
+                input.style.height = "auto"; // reset lại chiều cao
+                var loading = appendLoading();
+
+                try {
+                    var form = new FormData();
+                    form.append('message', msg);
+                    if (afToken) form.append('__RequestVerificationToken', afToken);
+
+                    var res = await fetch(chatUrl, {
+                        method: 'POST',
+                        body: form,
+                        credentials: 'same-origin',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    });
+
+                    var text = await res.text();
+
+                    try {
+                        var j = JSON.parse(text);
+                    } catch (e) {
+                        console.error("Server trả về:", text);
+                        appendMessage('Lỗi', 'Server lỗi rồi 😅', 'error');
+                        return;
+                    }
+                    content.removeChild(loading);
+
+                    if (j.ok) {
+                        appendMessage('Trợ lý', j.reply, 'assistant');
+                    } else {
+                        appendMessage('Hệ thống', j.error || 'Lỗi khi gọi trợ lý', 'error');
+                    }
+                } catch (e) {
+                    if (content.contains(loading)) content.removeChild(loading);
+                    appendMessage('Hệ thống', e.message || 'Lỗi kết nối', 'error');
+                }
+            }
+
+            // events
+            toggle.addEventListener('click', function () {
+                if (popup.classList.contains('open')) closePopup(); else openPopup();
+            });
+            closeBtn.addEventListener('click', closePopup);
+            sendBtn.addEventListener('click', sendMessage);
+            input.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+
+            // close when clicked outside (optional)
+            document.addEventListener('click', function (e) {
+                if (!popup.contains(e.target) && !toggle.contains(e.target) && popup.classList.contains('open')) {
+                    closePopup();
+                }
+            });
+        })();
+    </script>
+
+    <script>
+        const searchBox = document.getElementById("searchBox");
+        const suggestBox = document.getElementById("searchSuggest");
+
+        if (searchBox && suggestBox) {
+
+            // focus → hiện
+            searchBox.addEventListener("focus", () => {
+                suggestBox.style.display = "block";
+            });
+
+            // click ngoài → ẩn
+            document.addEventListener("click", function (e) {
+                if (!searchBox.contains(e.target) && !suggestBox.contains(e.target)) {
+                    suggestBox.style.display = "none";
+                }
+            });
+
+            // click keyword
+            document.querySelectorAll(".suggest-item").forEach(item => {
+                item.addEventListener("click", function () {
+                    searchBox.value = this.innerText;
+
+                    // auto search luôn
+                    window.location.href = "/Product/Search?query=" + encodeURIComponent(this.innerText);
+                });
+            });
+        }
+    </script>
+
+    <script>
+        const texts = [
+            "Bạn muốn tìm gì...",
+            "iPhone 17 Series",
+            "iPhone 16 Series",
+            "iPhone 15 Series",
+            "Laptop Gaming",
+            "Samsung Galaxy",
+            "Tai nghe Bluetooth",
+            "Máy ảnh Canon"
+        ];
+
+        let i = 0;
+        let j = 0;
+        let currentText = "";
+        let isDeleting = false;
+
+        const input = document.getElementById("searchBox");
+
+        function typeEffect() {
+            currentText = texts[i];
+
+            if (isDeleting) {
+                input.placeholder = currentText.substring(0, j--);
+            } else {
+                input.placeholder = currentText.substring(0, j++);
+            }
+
+            if (!isDeleting && j === currentText.length) {
+                isDeleting = true;
+                setTimeout(typeEffect, 1000);
+                return;
+            }
+
+            if (isDeleting && j === 0) {
+                isDeleting = false;
+                i = (i + 1) % texts.length;
+            }
+
+            setTimeout(typeEffect, isDeleting ? 50 : 100);
+        }
+
+        typeEffect();
+    </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            const btn = document.getElementById("menuToggle");
+            const menu = document.getElementById("categoryMenu");
+
+            // click mở
+            btn.addEventListener("click", function (e) {
+                e.stopPropagation();
+                menu.classList.toggle("open");
+            });
+
+            // click ngoài → đóng
+            document.addEventListener("click", function (e) {
+                if (!menu.contains(e.target) && !btn.contains(e.target)) {
+                    menu.classList.remove("open");
+                }
+            });
+
+        });
+
+    </script>
+
+
+    <script>
+        $(document).on("click", ".wishlist-add", function () {
+            var btn = $(this);
+            var productId = btn.data("productid");
+
+            $.post("/Wishlist/Add", { productId: productId }, function (res) {
+                if (res.success) {
+                    var icon = btn.find("i");
+
+                    if (res.already) {
+                        icon.removeClass("text-danger");
+                    } else {
+                        icon.addClass("text-danger");
+                    }
+                } else if (res.redirectUrl) {
+                    window.location.href = res.redirectUrl;
+                }
+            });
+        });
+    </script>
+
+    <script>
+        function addToCart(productId, quantity = 1) {
+            $.ajax({
+                url: window.cartAddUrl,
+                type: 'POST',
+                data: { productId: productId, quantity: quantity },
+                success: function (res) {
+
+                    if (res.redirectUrl) {
+                        window.location.href = res.redirectUrl;
+                        return;
+                    }
+
+                    if (res.success) {
+                        showToast(res.message, "success");
+                    } else {
+                        showToast(res.message, "error");
+                    }
+                }
+            });
+        }
+    </script>
+
+    <script>
+        function showToast(message, type = "success") {
+            var toast = document.createElement("div");
+            toast.className = "toast " + type;
+            toast.innerText = message;
+
+            var box = document.getElementById("toast-box");
+            if (!box) {
+                console.error("Không tìm thấy #toast-box");
+                return;
+            }
+
+            box.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.add("show");
+            }, 10);
+
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+    </script>
+
+    @if (TempData["Success"] != null)
+    {
+        <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            showToast(@Html.Raw(Json.Encode(TempData["Success"])), "success");
+        });
+        </script>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            showToast(@Html.Raw(Json.Encode(TempData["Error"])), "error");
+        });
+        </script>
+    }
+
+    @RenderSection("Scripts", required: false)
+
+    <div id="toast-box"></div>
+</body>
+</html>

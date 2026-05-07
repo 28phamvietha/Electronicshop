@@ -1,0 +1,261 @@
+﻿
+@{
+    ViewBag.Title = "Login";
+    Layout = "~/Views/Shared/_CustomerLayout.cshtml";
+}
+
+
+<html lang="en">
+<head>
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    <link rel="stylesheet" href="~/wwwroot/css/login-register.css">
+    <style>
+        #form-section {
+            background-color: #15161D;
+            padding: 80px 0;
+            min-height: 100vh;
+        }
+
+        #userform {
+            background: #000;
+            padding: 30px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.6);
+        }
+
+            #userform .nav-tabs {
+                margin-bottom: 25px;
+                z-index: 10;
+                position: relative;
+            }
+
+            #userform .tab-content {
+                position: relative;
+                z-index: 1;
+            }
+    </style>
+</head>
+
+<body>
+    <div id="form-section">
+        <div class="container">
+            <div class="col-lg-6 col-lg-offset-3 col-md-6 col-md-offset-3 col-md-8 col-md-offset-2">
+                <div id="userform">
+                    <ul class="nav nav-tabs nav-justified" role="tablist">
+                        <li class="active"><a href="#signup" role="tab" data-toggle="tab">Đăng ký</a></li>
+                        <li><a href="#login" role="tab" data-toggle="tab">Đăng nhập</a></li>
+                    </ul>
+                    <div class="tab-content">
+                        <div class="tab-pane fade active in" id="signup">
+                            <h2 class="text-uppercase text-center">Đăng ký miễn phí</h2>
+                            @using (Html.BeginForm("Register", "Account", FormMethod.Post, new { id = "signup" }))
+                            {
+                                <div class="row">
+                                    <div class="col-xs-12 col-sm-6">
+                                        <div class="form-group">
+                                            <label>Tên<span class="req">*</span> </label>
+                                            <input type="text" class="form-control" id="first_name" name="firstName" required data-validation-required-message="Vui lòng nhập tên của bạn" autocomplete="off">
+                                            <p class="help-block text-danger"></p>
+                                        </div>
+                                    </div>
+                                    <div class="col-xs-12 col-sm-6">
+                                        <div class="form-group">
+                                            <label> Họ và tên đệm<span class="req">*</span> </label>
+                                            <input type="text" class="form-control" id="last_name" name="lastName" required data-validation-required-message="Vui lòng nhập họ và tên đệm" autocomplete="off">
+                                            <p class="help-block text-danger"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label> Email<span class="req">*</span> </label>
+                                    <input type="email" class="form-control" id="email" name="email" required data-validation-required-message="Vui lòng nhập email" autocomplete="off">
+                                    <p class="help-block text-danger"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label> Điện thoại<span class="req">*</span> </label>
+                                    <input type="tel" class="form-control" id="phone" name="phone" required data-validation-required-message="Vui lòng nhập số điện thoại" autocomplete="off">
+                                    <p class="help-block text-danger"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label> Mật khẩu<span class="req">*</span> </label>
+                                    <input type="password" class="form-control" id="password" name="password" required data-validation-required-message="Vui lòng nhập mật khẩu" autocomplete="off">
+                                    <p class="help-block text-danger"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label> Xác nhận mật khẩu<span class="req">*</span> </label>
+                                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" required data-validation-required-message="Vui lòng nhập mật khẩu" autocomplete="off">
+                                    <p class="help-block text-danger"></p>
+                                </div>
+                                <div id="notification" class="alert" style="display: none;"></div>
+                                <p>@ViewBag.MessageRegister</p>
+
+                                <div class="mrgn-30-top">
+                                    <button id="signup-submit" type="submit" onclick="checkPasswordMatch()" class="btn btn-larger btn-block">Đăng ký</button>
+                                </div>
+                            }
+
+                        </div>
+                        <div class="tab-pane fade in" id="login">
+                            <h2 class="text-uppercase text-center"> Log in</h2>
+                            @using (Html.BeginForm("Login", "Account", FormMethod.Post, new { id = "login" }))
+                            {
+                                <div class="form-group">
+                                    <label> Email<span class="req">*</span> </label>
+                                    <input type="email" class="form-control" id="email" name="email" required data-validation-required-message="Vui lòng nhập email" autocomplete="off">
+                                    <p class="help-block text-danger"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label> Mật khẩu<span class="req">*</span> </label>
+                                    <input type="password" class="form-control" id="password" name="password" required data-validation-required-message="Vui lòng nhập mật khẩu" autocomplete="off">
+                                    <p class="help-block text-danger"></p>
+                                </div>
+                                <p>@ViewBag.MessageLogin</p>
+
+                                <div class="mrgn-30-top">
+                                    <button id="login-submit" type="submit" class="btn btn-larger btn-block">Đăng nhập</button>
+                                </div>
+                            }
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- /.container -->
+    </div>
+    <script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+    <script>
+        // Function to display a notification message
+        function displayNotification(message, type) {
+            var notification = $("#notification");
+            notification.text(message);
+            notification.removeClass();
+            notification.addClass("alert");
+
+            if (type === "error") {
+                notification.addClass("alert-danger");
+            } else if (type === "success") {
+                notification.addClass("alert-success");
+            }
+            notification.show();
+        }
+
+        // Function to clear the notification message
+        function clearNotification() {
+            var notification = $("#notification");
+            notification.text("");
+            notification.removeClass();
+            notification.hide();
+        }
+
+        // Password validation using regex
+        function isValidPassword(password) {
+            var passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
+            return passwordRegex.test(password);
+        }
+
+        // Function to check if passwords match and are valid
+        function checkPasswordMatch() {
+            var password = $("#signup #password").val();
+            var confirmPassword = $("#signup #confirm_password").val();
+
+            if (!isValidPassword(password)) {
+                displayNotification("Mật khẩu phải có ít nhất 8 ký tự, bao gồm cả chữ và số", "error");
+                return false;
+            } else if (password !== confirmPassword) {
+                displayNotification("Mật khẩu không khớp", "error");
+                return false;
+            } else {
+                clearNotification();
+                return true;
+            }
+        }
+
+        // Function to check if all required fields are filled
+        function checkRequiredFields() {
+            var isValid = true;
+            $("#signup input[required]").each(function () {
+                if ($(this).val() === '') {
+                    displayNotification("Trường này là bắt buộc: " + $(this).attr("name"), "error");
+                    isValid = false;
+                    return false; // Stop the loop on first empty field
+                }
+            });
+            if (isValid) {
+                clearNotification();
+            }
+            return isValid;
+        }
+
+        $("#signup").on("submit", function (event) {
+            var passwordMatch = checkPasswordMatch();
+            var fieldsFilled = checkRequiredFields();
+
+            if (!passwordMatch || !fieldsFilled) {
+                event.preventDefault(); // Prevent form submission if validation fails
+            }
+        });
+
+        $("#signup #password, #signup #confirm_password").on("keyup blur", function () {
+            checkPasswordMatch();
+        });
+
+        $("#signup input[required]").on("keyup blur", function () {
+            checkRequiredFields();
+        });
+
+
+
+
+
+
+
+
+
+        $('#form').find('input, textarea').on('keyup blur focus', function (e) {
+
+            var $this = $(this),
+                label = $this.prev('label');
+
+            if (e.type === 'keyup') {
+                if ($this.val() === '') {
+                    label.removeClass('active highlight');
+                } else {
+                    label.addClass('active highlight');
+                }
+            } else if (e.type === 'blur') {
+                if ($this.val() === '') {
+                    label.removeClass('active highlight');
+                } else {
+                    label.removeClass('highlight');
+                }
+            } else if (e.type === 'focus') {
+
+                if ($this.val() === '') {
+                    label.removeClass('highlight');
+                }
+                else if ($this.val() !== '') {
+                    label.addClass('highlight');
+                }
+            }
+
+        });
+
+        $('.tab a').on('click', function (e) {
+
+            e.preventDefault();
+
+            $(this).parent().addClass('active');
+            $(this).parent().siblings().removeClass('active');
+
+            target = $(this).attr('href');
+
+            $('.tab-content > div').not(target).hide();
+
+            $(target).fadeIn(800);
+
+        });
+    </script>
+</body>

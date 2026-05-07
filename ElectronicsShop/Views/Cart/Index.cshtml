@@ -1,0 +1,264 @@
+﻿﻿@{
+    ViewBag.Title = "Giỏ hàng";
+    Layout = "~/Views/Shared/_CustomerLayout.cshtml";
+}
+@using System.Globalization
+@{
+    var cultureInfo = new CultureInfo("vi-VN");
+}
+@section Styles {
+    @*<link type="text/css" rel="stylesheet" href="~/wwwroot/css/bootstrap.min.css" />*@
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+}
+
+@model IEnumerable<ElectronicsShop.Models.Cart>
+@{
+    ViewBag.Title = "Giỏ hàng của bạn";
+}
+
+<section class="pt-5 pb-5">
+    <div class="container">
+        <div class="row w-100">
+            <div class="col-lg-12 col-md-12 col-12">
+                <h3 class="display-5 mb-2 text-center">Giỏ hàng của bạn</h3>
+                @if (Model != null && Model.Any())
+                {
+                    <p class="mb-5 text-center">
+                        <span id="cart-row-count" class="font-weight-bold">@Model.Count()</span> sản phẩm trong giỏ hàng
+                    </p>
+                    <table id="shoppingCart" class="table align-middle ">
+                        <thead class="thead-light">
+                            <tr>
+                                <th style="width:30%; text-align:left";>Sản phẩm</th>
+                                <th style="width:20%; text-align:left";>Đơn giá</th>
+                                <th style="width:20%; text-align:left";>Số lượng</th>
+                                <th style="width:20%; text-align:left";>Tổng tiền</th>
+                                <th style="width:5%"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                <tr data-cartid="@item.cart_id" data-price="@(item.Product.discount_price ?? item.Product.price ?? 0)">
+                                    <td data-th="Product">
+                                        <div class="d-flex align-items-center" style="gap:15px;">
+
+                                            @{ var imageList = item.Product.Product_Images != null
+                                                  ? item.Product.Product_Images.ToList()
+                                                  : new List<ElectronicsShop.Models.Product_Images>();
+
+                                                var img = imageList.Count > 0 ? imageList[0].image_url : "noimage.png"; }
+                                            <img src="~/Images/@img"
+                                                 style="width:80px; height:80px; object-fit:cover; border-radius:10px;" />
+
+                                            <div class="text-start">
+                                                <h6 class="mb-1">@item.Product.product_name</h6>
+                                                <small class="text-muted">@item.Product.Category.category_name</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td data-th="Price">
+                                        @if (item.Product.discount_price != null)
+                                        {
+                                            var original = item.Product.price ?? 0;
+                                            var discount = item.Product.discount_price ?? 0;
+
+                                            var percent = original > 0
+                                                ? (int)Math.Round((original - discount) / original * 100)
+                                                : 0;
+
+                                            <div style="color:gray; text-decoration:line-through;">
+                                                @original.ToString("C0", cultureInfo)
+                                            </div>
+
+                                            <div style="color:red; font-weight:bold;">
+                                                @discount.ToString("C0", cultureInfo)
+                                                <span class="discount-badge">
+                                                    <i class="fas fa-arrow-down"></i>@percent%
+                                                </span>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div>
+                                                @item.Product.price.Value.ToString("C0", cultureInfo)
+                                            </div>
+                                        }
+                                    </td>
+                                    <td data-th="Quantity">
+                                        <input type="number"
+                                               class="form-control text-center mx-auto cart-qty"
+                                               style="width:80px"
+                                               value="@item.quantity"
+                                               min="1"
+                                               max="@item.Product.stock">
+                                               
+                                    </td>
+                                    <td data-th="Total" class="line-total">
+                                        @((item.Product.discount_price ?? item.Product.price ?? 0) * item.quantity)
+                                        .ToString("C0", cultureInfo)
+                                    </td>
+                                    <td class="actions" data-th="">
+                                        <div class="text-right">
+                                            @* AJAX remove button: matches cart.js binding *@
+                                            <button type="button" class="btn btn-outline-danger btn-sm cart-remove"
+                                                    data-cartid="@item.cart_id"
+                                                    title="Xóa">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                    <div class="float-right text-right" id="cart-total-wrapper">
+                        <h4>Tổng cộng:</h4>
+                        <h1 id="cart-total-amount">
+                            @Model.Sum(x => (x.Product.discount_price ?? x.Product.price ?? 0) * x.quantity)
+                                                .ToString("C0", cultureInfo)
+                                            </h1>
+                    </div>
+                }
+                else
+                {
+                    <p id="cart-empty-message">Giỏ hàng trống.</p>
+                }
+            </div>
+        </div>
+        <div class="row mt-4 mb-5 d-flex align-items-stretch">
+            <div class="col-sm-6 mb-3 mb-m-1 order-md-1 text-md-left">
+                <a href="@Url.Action("Index", "Home")">
+                    <i class="fas fa-arrow-left mr-2"></i> Tiếp tục mua hàng
+                </a>
+            </div>
+            <div class="col-sm-6 order-md-2 text-right">
+                <a href="@Url.Action("Purchase", "Cart")" class="btn btn-primary mb-4 btn-lg pl-5 pr-5">Đặt hàng</a>
+            </div>
+        </div>
+    </div>
+    <br /> <br /> 
+</section>
+
+@section Scripts {
+    <script>
+        const vnd = new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' });
+
+        function recalcCartTotals() {
+            let grandTotal = 0;
+
+            document.querySelectorAll('#shoppingCart tbody tr').forEach(row => {
+                const price = parseFloat(row.dataset.price || '0'); // giá KM
+                const originalPrice = parseFloat(row.dataset.original || price); // giá gốc
+                const qtyInput = row.querySelector('.cart-qty');
+                const qty = parseInt(qtyInput?.value || '0', 10);
+
+                const lineTotal = price * qty;
+                const originalTotal = originalPrice * qty;
+
+                grandTotal += lineTotal;
+
+                const lineTotalCell = row.querySelector('.line-total');
+
+                if (lineTotalCell) {
+                    // nếu có giảm giá
+                    if (originalPrice > price) {
+                        lineTotalCell.innerHTML = `
+              <div style="color:gray; text-decoration:line-through;">
+                ${vnd.format(originalTotal)}
+              </div>
+              <div style="color:red; font-weight:bold;">
+                ${vnd.format(lineTotal)}
+              </div>
+            `;
+                    } else {
+                        lineTotalCell.textContent = vnd.format(lineTotal);
+                    }
+                }
+            });
+
+            const totalEl = document.getElementById('cart-total-amount');
+            if (totalEl) totalEl.textContent = vnd.format(grandTotal);
+        }
+
+        document.addEventListener('input', function (e) {
+            if (!e.target.classList.contains('cart-qty')) return;
+
+            let input = e.target;
+            let row = input.closest('tr');
+            let cartId = row.dataset.cartid;
+
+            let max = parseInt(input.max || '999999', 10);
+            let rawVal = input.value;
+
+            // ✅ cho phép rỗng để user nhập tiếp
+            if (rawVal === "") {
+                recalcCartTotals();
+                return;
+            }
+
+            let val = parseInt(rawVal, 10);
+
+            if (!isNaN(val)) {
+
+                if (val < 1) {
+                    val = 1;
+                    input.value = val;
+                }
+                else if (val > max) {
+                    val = max;
+                    input.value = val;
+                    alert("Vượt quá số lượng trong kho");
+                }
+
+                // 🔥 gọi API
+                fetch('/Cart/UpdateQuantity', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        cartId: parseInt(cartId),
+                        quantity: val
+                    })
+                });
+            }
+
+            recalcCartTotals();
+        });
+
+        document.addEventListener('blur', function (e) {
+            if (!e.target.classList.contains('cart-qty')) return;
+
+            let input = e.target;
+            let row = input.closest('tr');
+            let cartId = row.dataset.cartid;
+
+            if (input.value === "" || parseInt(input.value) < 1) {
+                input.value = 1;
+
+                fetch('/Cart/UpdateQuantity', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        cartId: parseInt(cartId),
+                        quantity: 1
+                    })
+                });
+            }
+
+            recalcCartTotals();
+
+        }, true); // ⚠️ bắt buộc phải có true
+
+        // chặn nhập dấu -
+        document.addEventListener("keydown", function (e) {
+            if (e.target.classList.contains("cart-qty")) {
+                if (e.key === "-" || e.key === "e") {
+                    e.preventDefault();
+                }
+            }
+        });
+
+        // chạy lần đầu
+        recalcCartTotals();
+    </script>
+}

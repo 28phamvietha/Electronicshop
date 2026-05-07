@@ -1,0 +1,557 @@
+﻿@{
+    ViewBag.Title = "Thống kê số liệu";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<style>
+    .stat-container {
+        background-color: #fff;
+        padding: 18px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.06);
+        border-radius: 8px;
+        width: 100%;
+        margin-bottom: 20px;
+    }
+
+    .controls {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-bottom: 12px;
+    }
+
+        .controls .group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .controls label {
+            font-weight: 600;
+            color: #333;
+        }
+
+    input[type="date"], select {
+        padding: 6px 8px;
+        font-size: 14px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+
+    button.btn {
+        padding: 8px 12px;
+        border-radius: 6px;
+        border: 1px solid #cfcfcf;
+        background: #fff;
+        cursor: pointer;
+    }
+
+    button.btn-primary {
+        background: #0d6efd;
+        color: #fff;
+        border-color: #0d6efd;
+    }
+
+    .charts {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+        align-items: start;
+    }
+
+    #orderChart, #revenueChart {
+        width: 100%;
+        height: 320px;
+        background: #fafafa;
+        padding: 10px;
+        border-radius: 6px;
+        border: 1px solid #f0f0f0;
+    }
+
+    .table-wrap {
+        margin-top: 18px;
+    }
+
+    table.stats-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+    }
+
+        table.stats-table th, table.stats-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #eee;
+            text-align: left;
+        }
+
+        table.stats-table th {
+            background: #f8f9fb;
+            font-weight: 700;
+            color: #0d6efd;
+        }
+
+    .text-muted {
+        color: #6c757d;
+    }
+
+    /* Responsive */
+    @@media (max-width: 980px) {
+        .charts {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .stat-box {
+        min-height: 140px; /* tăng chiều cao */
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 25px 30px !important;
+        transition: all 0.3s ease;
+        border-radius: 10px;
+    }
+        .stat-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+        .stat-box h4 {
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        .stat-box h6 {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+</style>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="stat-box bg-primary text-white p-3 rounded">
+            <h6>Tổng đơn</h6>
+            <h4 id="statOrders">0</h4>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="stat-box bg-success text-white p-3 rounded">
+            <h6>Doanh thu</h6>
+            <h4 id="statRevenue">0 ₫</h4>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="stat-box bg-warning text-white p-3 rounded">
+            <h6>Khách hàng</h6>
+            <h4 id="statCustomers">0</h4>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="stat-box bg-danger text-white p-3 rounded">
+            <h6>Sản phẩm bán</h6>
+            <h4 id="statProducts">0</h4>
+        </div>
+    </div>
+</div>
+
+<div class="stat-container">
+    <h2>@ViewBag.Title</h2>
+
+    <div class="controls">
+        <div class="group">
+            <label for="startDate">Từ</label>
+            <input type="date" id="startDate" />
+            <label for="endDate">Đến</label>
+            <input type="date" id="endDate" />
+        </div>
+
+        <div class="group">
+            <label for="agg">Phân tích</label>
+            <select id="agg">
+                <option value="day">Theo ngày</option>
+                <option value="month">Theo tháng</option>
+                <option value="year">Theo năm</option>
+            </select>
+        </div>
+
+        <div class="group">
+            <label for="preset">Mốc nhanh</label>
+            <select id="preset">
+                <option value="">Tùy chọn</option>
+                <option value="7">7 ngày gần nhất</option>
+                <option value="30">30 ngày gần nhất</option>
+                <option value="mtd">Tháng hiện tại</option>
+                <option value="ytd">Năm hiện tại</option>
+            </select>
+        </div>
+
+        <div class="group">
+            <button class="btn btn-primary" id="applyBtn">Áp dụng</button>
+            <button class="btn" id="resetBtn">Đặt lại</button>
+        </div>
+
+        <div style="margin-left:auto; display:flex; gap:8px;">
+            <button class="btn" id="exportExcelBtn">Xuất Excel</button>
+            <button class="btn" id="exportPdfBtn">Xuất PDF</button>
+        </div>
+    </div>
+
+    <div class="charts">
+        <canvas id="orderChart"></canvas>
+    </div>
+    <div class="charts">
+        <canvas id="revenueChart"></canvas>
+    </div>
+
+    <div class="table-wrap">
+        <h4>Bảng chi tiết</h4>
+        <div id="summaryLine" class="text-muted" style="margin-bottom:8px;"></div>
+        <div style="overflow:auto; max-height:360px;">
+            <table class="stats-table">
+                <thead>
+                    <tr>
+                        <th>Thời gian</th>
+                        <th style="text-align:right">Số đơn hàng</th>
+                        <th style="text-align:right">Doanh thu</th>
+                    </tr>
+                </thead>
+                <tbody id="dataBody">
+                    <tr><td colspan="3" class="text-muted">Chưa có dữ liệu</td></tr>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th>Tổng</th>
+                        <th id="totalOrders" style="text-align:right">0</th>
+                        <th id="totalRevenue" style="text-align:right">0 ₫</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const apiUrl = '@Url.Action("GetOrdersData", "Admin_Orders")';
+        const orderCtx = document.getElementById('orderChart').getContext('2d');
+        const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+
+        const startDateInput = document.getElementById('startDate');
+        const endDateInput = document.getElementById('endDate');
+        const aggSelect = document.getElementById('agg');
+        const presetSelect = document.getElementById('preset');
+
+        const applyBtn = document.getElementById('applyBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const exportExcelBtn = document.getElementById('exportExcelBtn');
+        const exportPdfBtn = document.getElementById('exportPdfBtn');
+        const printBtn = document.getElementById('printBtn');
+
+        const dataBody = document.getElementById('dataBody');
+        const totalOrdersEl = document.getElementById('totalOrders');
+        const totalRevenueEl = document.getElementById('totalRevenue');
+        const summaryLine = document.getElementById('summaryLine');
+
+        // Helper formatters
+        const nf = new Intl.NumberFormat('vi-VN');
+        function formatCurrency(v) {
+            if (v == null || isNaN(v)) return "-";
+            return nf.format(v) + " ₫";
+        }
+
+        // Default dates: last 30 days
+        const today = new Date();
+        const prior = new Date(); prior.setDate(today.getDate() - 29);
+        function toIsoDate(d) { return d.toISOString().slice(0,10); }
+        startDateInput.value = toIsoDate(prior);
+        endDateInput.value = toIsoDate(today);
+
+        // Charts
+        const orderChart = new Chart(orderCtx, {
+            type: 'bar',
+            data: { labels: [], datasets: [{ label: 'Số lượng đơn', data: [], backgroundColor: 'rgba(13,110,253,0.6)' }] },
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+        });
+
+        const revenueChart = new Chart(revenueCtx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Doanh thu (₫)',
+                    data: [],
+                    backgroundColor: 'rgba(16,185,129,0.15)',
+                    borderColor: 'rgba(16,185,129,1)',
+                    fill: true,
+                    tension: 0.2
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+        });
+
+        function buildQueryParams() {
+            const start = startDateInput.value;
+            const end = endDateInput.value;
+            const agg = aggSelect.value;
+            return `?agg=${encodeURIComponent(agg)}&start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`;
+        }
+
+        function showErrorRow(message) {
+            dataBody.innerHTML = `<tr><td colspan="3" class="text-muted">${message}</td></tr>`;
+            orderChart.data.labels = []; orderChart.data.datasets[0].data = []; orderChart.update();
+            revenueChart.data.labels = []; revenueChart.data.datasets[0].data = []; revenueChart.update();
+            totalOrdersEl.textContent = "0";
+            totalRevenueEl.textContent = "-";
+            summaryLine.textContent = "";
+        }
+
+        async function fetchDataAndRender() {
+            const params = buildQueryParams();
+            try {
+                const res = await fetch(apiUrl + params, { credentials: 'same-origin' });
+                if (!res.ok) throw new Error('Server trả về lỗi ' + res.status);
+                const data = await res.json();
+
+                // Expecting data structure: { labels: [...], orders: [...], revenue: [...] }
+                // Backward-compatibility: accept { date:[], count:[], revenue:[] }
+                let labels = data.labels || data.date || [];
+                let orders = data.orders || data.count || [];
+                let revenue = data.revenue || [];
+
+                if (!Array.isArray(labels) || labels.length === 0) {
+                    showErrorRow("Không có dữ liệu cho khoảng thời gian này.");
+                    return;
+                }
+
+                // Update charts
+                orderChart.data.labels = labels;
+                orderChart.data.datasets[0].data = orders;
+                orderChart.update();
+
+                revenueChart.data.labels = labels;
+                revenueChart.data.datasets[0].data = revenue;
+                revenueChart.update();
+
+                // Update table
+                let rowsHtml = '';
+                let totalOrders = 0;
+                let totalRevenue = 0;
+                for (let i = 0; i < labels.length; i++) {
+                    const l = labels[i];
+                    const o = parseInt(orders[i]) || 0;
+                    const r = parseFloat(revenue[i]) || 0;
+                    totalOrders += o;
+                    totalRevenue += r;
+                    rowsHtml += `<tr>
+                        <td>${l}</td>
+                        <td style="text-align:right">${o}</td>
+                        <td style="text-align:right">${formatCurrency(r)}</td>
+                    </tr>`;
+                }
+                dataBody.innerHTML = rowsHtml;
+                totalOrdersEl.textContent = nf.format(totalOrders);
+                totalRevenueEl.textContent = formatCurrency(totalRevenue);
+
+                // 👉 thêm đoạn này
+                document.getElementById("statOrders").textContent = nf.format(totalOrders || 0);
+                document.getElementById("statRevenue").textContent = formatCurrency(totalRevenue || 0);
+
+                // demo tạm
+                document.getElementById("statCustomers").textContent = nf.format(totalOrders || 0);
+                document.getElementById("statProducts").textContent = nf.format((totalOrders || 0) * 2);
+
+                summaryLine.textContent = `Từ ${startDateInput.value} đến ${endDateInput.value} — Tổng đơn: ${nf.format(totalOrders)}, Doanh thu: ${formatCurrency(totalRevenue)}`;
+            } catch (err) {
+                console.error(err);
+                showErrorRow("Lấy dữ liệu thất bại. Kiểm tra endpoint hoặc kết nối.");
+            }
+        }
+
+        // Preset handler
+        presetSelect.addEventListener('change', function () {
+            const v = presetSelect.value;
+            const now = new Date();
+            if (v === '7' || v === '30') {
+                const days = Number(v);
+                const s = new Date(); s.setDate(now.getDate() - (days - 1));
+                startDateInput.value = toIsoDate(s);
+                endDateInput.value = toIsoDate(now);
+            } else if (v === 'mtd') {
+                const s = new Date(now.getFullYear(), now.getMonth(), 1);
+                startDateInput.value = toIsoDate(s);
+                endDateInput.value = toIsoDate(now);
+            } else if (v === 'ytd') {
+                const s = new Date(now.getFullYear(), 0, 1);
+                startDateInput.value = toIsoDate(s);
+                endDateInput.value = toIsoDate(now);
+            }
+        });
+
+        applyBtn.addEventListener('click', function () {
+            // basic validation
+            if (!startDateInput.value || !endDateInput.value) {
+                alert('Vui lòng chọn cả ngày bắt đầu và kết thúc.');
+                return;
+            }
+            if (startDateInput.value > endDateInput.value) {
+                alert('Ngày bắt đầu phải nhỏ hơn hoặc bằng ngày kết thúc.');
+                return;
+            }
+            fetchDataAndRender();
+        });
+
+        resetBtn.addEventListener('click', function () {
+            startDateInput.value = toIsoDate(prior);
+            endDateInput.value = toIsoDate(today);
+            aggSelect.value = 'day';
+            presetSelect.value = '';
+            fetchDataAndRender();
+        });
+
+        // Export Excel
+        exportExcelBtn.addEventListener('click', function () {
+            const labels = orderChart.data.labels || [];
+            const orders = orderChart.data.datasets[0].data || [];
+            const revenue = revenueChart.data.datasets[0].data || [];
+
+            const rows = labels.map((lbl, idx) => ({
+                'Thời gian': lbl,
+                'Số đơn hàng': orders[idx] || 0,
+                'Doanh thu': revenue[idx] || 0
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(rows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Thống_kê");
+            const fileName = `thong_ke${startDateInput.value}_${endDateInput.value}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+        });
+
+        // Export PDF (stack charts vertically to two rows)
+        exportPdfBtn.addEventListener('click', async function () {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('l', 'mm', 'a4');
+
+            try {
+                const pageWidth = pdf.internal.pageSize.getWidth();
+                const pageHeight = pdf.internal.pageSize.getHeight();
+                const margin = 10; // mm
+                const availW = pageWidth - margin * 2;
+                let y = 10;
+
+                // Header (render with html2canvas to preserve Vietnamese)
+                const headerEl = document.createElement('div');
+                headerEl.style.width = '1200px';
+                headerEl.style.padding = '12px';
+                headerEl.style.background = '#ffffff';
+                headerEl.style.boxSizing = 'border-box';
+                headerEl.style.fontFamily = 'Arial, "Helvetica Neue", Helvetica, sans-serif';
+                headerEl.style.color = '#111';
+                headerEl.innerHTML = `
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+                <div>
+                    <h2 style="margin:0 0 6px 0;color:#0d6efd;">BÁO CÁO THỐNG KÊ ĐƠN HÀNG</h2>
+                    <div style="font-size:12px;margin-bottom:6px;">Khoảng: ${startDateInput.value} → ${endDateInput.value}</div>
+                    <div style="font-size:11px;color:#333;">${summaryLine.textContent || ''}</div>
+                </div>
+                <div style="text-align:right;font-size:11px;color:#333;">
+                    <div>Xuất: ${new Date().toLocaleString('vi-VN')}</div>
+                </div>
+            </div>
+            <hr style="border:none;border-top:1px solid #eee;margin:10px 0;">
+        `;
+                Object.assign(headerEl.style, { position: 'fixed', left: '-9999px', top: '0px' });
+                document.body.appendChild(headerEl);
+                const headerCanvas = await html2canvas(headerEl, { scale: 2, backgroundColor: '#ffffff' });
+                document.body.removeChild(headerEl);
+                const headerImg = headerCanvas.toDataURL('image/png');
+                const headerProps = pdf.getImageProperties(headerImg);
+                const headerH = (headerProps.height * availW) / headerProps.width;
+                pdf.addImage(headerImg, 'PNG', margin, y, availW, headerH);
+                y += headerH + 6;
+
+                // Ensure charts finished and no animation
+                const prevOrderAnim = orderChart.options.animation;
+                const prevRevenueAnim = revenueChart.options.animation;
+                orderChart.options.animation = false;
+                revenueChart.options.animation = false;
+                orderChart.update();
+                revenueChart.update();
+
+                // Get chart images
+                const orderImg = orderChart.toBase64Image();
+                const revenueImg = revenueChart.toBase64Image();
+
+                const orderProps = pdf.getImageProperties(orderImg);
+                const revenueProps = pdf.getImageProperties(revenueImg);
+
+                // Force stacking: full width, one chart per row
+                let orderH = (orderProps.height * availW) / orderProps.width;
+                let revenueH = (revenueProps.height * availW) / revenueProps.width;
+
+                // If not enough space for first chart, add a page
+                if (y + orderH + margin > pageHeight) {
+                    pdf.addPage();
+                    y = margin;
+                }
+                pdf.addImage(orderImg, 'PNG', margin, y, availW, orderH);
+                y += orderH + 8;
+
+                // If not enough space for second chart, add a page
+                if (y + revenueH + margin > pageHeight) {
+                    pdf.addPage();
+                    y = margin;
+                }
+                pdf.addImage(revenueImg, 'PNG', margin, y, availW, revenueH);
+                y += revenueH + 8;
+
+                // Footer totals (render to image to preserve diacritics)
+                const footerEl = document.createElement('div');
+                footerEl.style.width = '1200px';
+                footerEl.style.padding = '6px 12px';
+                footerEl.style.background = '#ffffff';
+                footerEl.style.fontFamily = 'Arial, "Helvetica Neue", Helvetica, sans-serif';
+                footerEl.style.fontSize = '12px';
+                footerEl.style.color = '#111';
+                footerEl.innerHTML = `<div style="display:flex;gap:24px;">
+            <div style="font-weight:700">Tổng đơn: ${totalOrdersEl.textContent || '0'}</div>
+            <div style="font-weight:700">Doanh thu: ${totalRevenueEl.textContent || '-'}</div>
+        </div>`;
+                Object.assign(footerEl.style, { position: 'fixed', left: '-9999px', top: '0px' });
+                document.body.appendChild(footerEl);
+                const footerCanvas = await html2canvas(footerEl, { scale: 2, backgroundColor: '#ffffff' });
+                document.body.removeChild(footerEl);
+                const footerImg = footerCanvas.toDataURL('image/png');
+                const footerProps = pdf.getImageProperties(footerImg);
+                const footerH = (footerProps.height * availW) / footerProps.width;
+                if (y + footerH + margin > pageHeight) {
+                    pdf.addPage();
+                    y = margin;
+                }
+                pdf.addImage(footerImg, 'PNG', margin, y, availW, footerH);
+
+                // restore animation settings
+                orderChart.options.animation = prevOrderAnim;
+                revenueChart.options.animation = prevRevenueAnim;
+                orderChart.update();
+                revenueChart.update();
+
+                // save
+                pdf.save(`thong_ke_don_hang_${startDateInput.value}_${endDateInput.value}.pdf`);
+            } catch (ex) {
+                console.error(ex);
+                alert('Tạo PDF thất bại: ' + (ex && ex.message ? ex.message : ex));
+            }
+        });
+
+        // initial load
+        fetchDataAndRender();
+    });
+</script>

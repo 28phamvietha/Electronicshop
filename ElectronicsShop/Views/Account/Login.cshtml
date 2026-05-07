@@ -1,0 +1,187 @@
+﻿@{
+    ViewBag.Title = "Đăng nhập";
+    Layout = "~/Views/Shared/_CustomerLayout.cshtml";
+}
+
+@section Styles {
+    <style>
+        /* Toàn bộ vùng chứa form phải có màu nền tối giống hình gốc */
+        #form-section {
+            background-color: #15161D; /* Màu tối của trang chủ */
+            padding: 60px 0;
+            min-height: 80vh;
+        }
+
+        #userform {
+            background: #000000; /* Nền đen tuyền cho form */
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+            /* Tùy chỉnh Tab Đăng nhập / Đăng ký */
+            #userform .nav-tabs.nav-justified > li > a {
+                border: none;
+                border-radius: 0;
+                background: #303030;
+                color: #E4E7ED;
+                font-weight: 700;
+                text-transform: uppercase;
+                padding: 15px;
+                margin: 0;
+            }
+
+            #userform .nav-tabs.nav-justified > li.active > a {
+                background: #F8BD14 !important; /* Màu vàng rực như hình image_5b2a1f */
+                color: #000 !important;
+            }
+
+        /* Tiêu đề ĐĂNG NHẬP giữa form */
+        .login-title {
+            color: #ffffff;
+            font-size: 30px;
+            font-weight: 700;
+            margin: 40px 0;
+            text-align: center;
+        }
+
+        /* Tùy chỉnh Input giống giao diện cũ */
+        #userform .form-group {
+            margin-bottom: 25px;
+        }
+
+        #userform label {
+            color: #8D99AE;
+            font-weight: 400;
+        }
+
+        #userform .form-control {
+            background: transparent;
+            border: 1px solid #333;
+            border-radius: 0;
+            color: #fff;
+            height: 45px;
+        }
+
+            #userform .form-control:focus {
+                border-color: #F8BD14;
+                box-shadow: none;
+            }
+
+        /* Nút Đăng nhập viền vàng hoặc đỏ */
+        .btn-submit-custom {
+            background: transparent;
+            border: 2px solid #F8BD14; /* Viền vàng */
+            color: #F8BD14;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 12px;
+            transition: 0.3s;
+            margin-top: 20px;
+        }
+
+            .btn-submit-custom:hover {
+                background: #F8BD14;
+                color: #000;
+            }
+
+        .req {
+            color: #D10024;
+        }
+
+        #userform .nav-tabs {
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        #userform .tab-content {
+            padding-top: 10px;
+        }
+
+        #userform .tab-pane {
+            position: relative;
+            z-index: 1;
+        }
+    </style>
+}
+
+<div id="form-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6 col-md-offset-3 col-sm-8 col-sm-offset-2">
+                <div id="userform">
+                    <ul class="nav nav-tabs nav-justified" role="tablist">
+                        <li class="active"><a href="#login" role="tab" data-toggle="tab">Đăng nhập</a></li>
+                        <li><a href="#signup" role="tab" data-toggle="tab">Đăng ký</a></li>
+                    </ul>
+                    <div class="tab-content" style="padding: 0 40px 40px 40px;">
+                        <div class="tab-pane fade active in" id="login">
+                            <h2 class="login-title text-uppercase">Đăng nhập</h2>
+
+                            @using (Html.BeginForm("Login", "Account", FormMethod.Post, new { id = "login-form" }))
+                            {
+                                <div class="form-group">
+                                    <label>Email <span class="req">*</span></label>
+                                    <input type="email" class="form-control" name="email" required autocomplete="off">
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Mật khẩu <span class="req">*</span></label>
+                                    <input type="password" class="form-control" name="password" required autocomplete="off">
+                                </div>
+
+                                <p class="text-danger">@ViewBag.MessageLogin</p>
+
+                                <button type="submit" class="btn btn-submit-custom btn-block">Đăng nhập</button>
+                            }
+                        </div>
+
+                        <div class="tab-pane fade" id="signup">
+                            <h2 class="login-title text-uppercase">Đăng ký</h2>
+                            @using (Html.BeginForm("Register", "Account", FormMethod.Post, new { id = "register-form" }))
+                            {
+                                <div class="row">
+                                    <div class="col-sm-6">
+                                        <div class="form-group">
+                                            <label>Tên <span class="req">*</span></label>
+                                            <input type="text" class="form-control" name="firstName" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <div class="form-group">
+                                            <label>Họ đệm <span class="req">*</span></label>
+                                            <input type="text" class="form-control" name="lastName" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Email <span class="req">*</span></label>
+                                    <input type="email" class="form-control" name="email" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Điện thoại <span class="req">*</span></label>
+                                    <input type="tel" class="form-control" name="phone" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Địa chỉ <span class="req">*</span></label>
+                                    <input type="text" class="form-control" name="address" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Mật khẩu <span class="req">*</span></label>
+                                    <input type="password" class="form-control" id="reg_password" name="password" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Xác nhận mật khẩu <span class="req">*</span></label>
+                                    <input type="password" class="form-control" id="confirm_password" required>
+                                </div>
+
+                                <p class="text-danger">@ViewBag.MessageRegister</p>
+
+                                <button type="submit" class="btn btn-submit-custom btn-block">Đăng ký ngay</button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,544 @@
+﻿@model IEnumerable<ElectronicsShop.Models.Product>
+
+@{
+    ViewBag.Title = "Quản lý sản phẩm";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<style>
+    /* Thumbnail ảnh lớn hơn (vuông), giữ tỉ lệ */
+    .thumb {
+        width: 200px;
+        height: 200px;
+        object-fit: cover;
+        border-radius: 6px;
+    }
+
+    .placeholder-img {
+        width: 200px;
+        height: 200px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #f1f3f5;
+        border-radius: 6px;
+        color: #6c757d;
+        font-size: 13px;
+        border: 1px solid #e9ecef;
+    }
+
+    .products-table thead th {
+        font-size: 16px;
+        font-weight: 700;
+        color: #0d6efd;
+        background-color: transparent;
+        border-bottom: 2px solid rgba(13,110,253,0.15);
+        vertical-align: middle;
+    }
+
+        /* indicate sortable */
+        .products-table thead th.sortable {
+            cursor: pointer;
+            user-select: none;
+        }
+
+    .sort-indicator {
+        margin-left: 6px;
+        font-size: 0.85em;
+        color: #6c757d;
+    }
+
+    .desc {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: normal;
+        word-break: break-word;
+        line-height: 1.4;
+        color: #495057;
+        font-size: 0.92rem;
+    }
+
+    .badge-new {
+        background: linear-gradient(90deg,#ff7a59,#ff3b30);
+        color: #fff;
+        font-weight: 700;
+        padding: .35rem .55rem;
+        font-size: .95rem;
+        border-radius: .375rem;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        display: inline-block;
+    }
+
+    .actions .btn {
+        min-width: 92px;
+        margin-right: 6px;
+        padding: .325rem .5rem;
+        font-size: .88rem;
+        text-align: center;
+    }
+
+    .products-table tbody td {
+        vertical-align: middle;
+    }
+
+    .products-table td.price-cell {
+        white-space: nowrap;
+        word-break: normal;
+    }
+
+    /* Search bar */
+    .search-bar {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        min-width: 320px;
+    }
+
+        .search-bar .form-control {
+            width: 320px;
+        }
+
+    /* Pagination controls */
+    .paging {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        justify-content: flex-end;
+        margin-bottom: 12px;
+    }
+
+        .paging .page-btn {
+            padding: 6px 10px;
+            border-radius: 4px;
+            border: 1px solid #e3e6ea;
+            background: #fff;
+            cursor: pointer;
+        }
+
+            .paging .page-btn.active {
+                background: #0d6efd;
+                color: #fff;
+                border-color: #0d6efd;
+            }
+
+        .paging .page-size {
+            width: 80px;
+        }
+
+    /* Responsive */
+    @@media (max-width: 992px) {
+        .thumb, .placeholder-img {
+            width: 140px;
+            height: 140px;
+        }
+
+        .desc {
+            -webkit-line-clamp: 2;
+        }
+    }
+
+    @@media (max-width: 576px) {
+        .thumb, .placeholder-img {
+            width: 100px;
+            height: 100px;
+        }
+
+        .desc {
+            -webkit-line-clamp: 2;
+            font-size: 0.85rem;
+        }
+
+        .actions .btn {
+            min-width: 72px;
+            font-size: 0.8rem;
+            padding: .25rem .4rem;
+        }
+
+        .search-bar .form-control {
+            width: 160px;
+        }
+    }
+</style>
+
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Danh sách sản phẩm</h5>
+
+        <div class="d-flex align-items-center" style="gap:10px;">
+            @using (Html.BeginForm("Index", "Admin_Products", FormMethod.Get, new { id = "searchForm", @class = "d-flex align-items-center search-bar", role = "search" }))
+            {
+                <input name="q" id="q" type="search" class="form-control form-control-sm" placeholder="Tìm kiếm sản phẩm" aria-label="Tìm sản phẩm" value="@(ViewBag.SearchQuery ?? "")" />
+                <button type="submit" class="btn btn-sm btn-primary">Tìm</button>
+                <button type="button" id="clearSearch" class="btn btn-sm btn-outline-secondary" title="Xóa tìm kiếm">X</button>
+            }
+
+            <div>
+                @Html.ActionLink("Thêm mới", "Create", null, new { @class = "btn btn-sm btn-success" })
+            </div>
+        </div>
+    </div>
+
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle mb-0 products-table">
+                <thead>
+                    <tr>
+                        <th style="width:220px">Ảnh</th>
+                        <th class="sortable" data-sort="category">Danh mục <span class="sort-indicator"></span></th>
+                        <th class="sortable" data-sort="name">Sản phẩm <span class="sort-indicator"></span></th>
+                        <th class="sortable" data-sort="description" style="width:360px">Mô tả <span class="sort-indicator"></span></th>
+                        <th class="sortable" data-sort="price" width="80">Giá <span class="sort-indicator"></span></th>
+                        <th class="sortable" data-sort="discount" width="80">Giá KM <span class="sort-indicator"></span></th>
+                        <th class="sortable" data-sort="stock">Kho <span class="sort-indicator"></span></th>
+                        <th class="sortable" data-sort="brand">Thương hiệu <span class="sort-indicator"></span></th>
+                        <th class="sortable" data-sort="isNew">Mới <span class="sort-indicator"></span></th>
+                        <th width="200">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody id="productsTbody">
+                    @if (Model == null || !Model.Any())
+                    {
+                        <tr>
+                            <td colspan="10" class="text-center text-muted">Không có sản phẩm nào</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        var rowIndex = 0;
+                        foreach (var item in Model)
+                        {
+                            rowIndex++;
+                            <tr class="data-row" data-index="@rowIndex">
+                                <td style="width:220px">
+                                    @{
+                                        var img = item.Product_Images != null && item.Product_Images.Any()
+                                                  ? Url.Content("~/Images/" + item.Product_Images.First().image_url)
+                                                  : Url.Content("~/Images/noimage.png");
+                                    }
+                                    <img src="@img" alt="Ảnh" class="img-thumbnail thumb" />
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.Category.category_name)
+                                </td>
+                                <td>
+                                    @Html.ActionLink(item.product_name, "Details", new { id = item.product_id })
+                                </td>
+                                <td>
+                                    <div class="desc" title="@item.description">@item.description</div>
+                                </td>
+                                <td class="price-cell">
+                                    @{
+                                        var priceText = item.price != null ? String.Format("{0:N0}\u00A0₫", item.price) : "-";
+                                    }
+                                    @priceText
+                                </td>
+                                <td class="price-cell">
+                                    @{
+                                        var discountText = item.discount_price != null ? String.Format("{0:N0}\u00A0₫", item.discount_price) : "-";
+                                    }
+                                    @discountText
+                                </td>
+                                <td>
+                                    <span>@item.stock</span>
+                                </td>
+                                <td>
+                                    @Html.DisplayFor(modelItem => item.brand)
+                                </td>
+                                <td>
+                                    @if (item.is_new == true)
+                                    {
+                                        <span class="badge-new">MỚI</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">—</span>
+                                    }
+                                </td>
+                                <td class="actions">
+                                    @Html.ActionLink("Chi tiết", "Details", new { id = item.product_id }, new { @class = "btn btn-sm btn-outline-primary" })
+                                    @Html.ActionLink("Sửa", "Edit", new { id = item.product_id }, new { @class = "btn btn-sm btn-outline-secondary" })
+                                    @Html.ActionLink("Xóa", "Delete", new { id = item.product_id }, new { @class = "btn btn-sm btn-outline-danger", onclick = "return confirm('Bạn có chắc muốn xóa sản phẩm này?');" })
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+        <!-- Pagination controls (client-side) -->
+        <div class="paging" aria-label="Pagination controls">
+            <div>
+                <label for="pageSize">Số hàng / trang</label>
+                <select id="pageSize" class="form-select page-size">
+                    <option value="5">5</option>
+                    <option value="10" selected>10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                </select>
+            </div>
+
+            <div style="margin-left:auto; display:flex; gap:6px; align-items:center;">
+                <button id="firstPage" class="page-btn" type="button">&laquo; Đầu</button>
+                <button id="prevPage" class="page-btn" type="button">&lsaquo; Trước</button>
+                <div id="pageNumbers" style="display:flex; gap:6px;"></div>
+                <button id="nextPage" class="page-btn" type="button">Tiếp &rsaquo;</button>
+                <button id="lastPage" class="page-btn" type="button">Cuối &raquo;</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Client-side sorting + pagination + client-side search (vanilla JS).
+    // Search is now performed entirely on the client: keeps server code unchanged.
+    document.addEventListener('DOMContentLoaded', function () {
+        initTable();
+    });
+
+    // initTable encapsulates all client-side table features and can be re-run if tbody is replaced.
+    function initTable() {
+        const tbody = document.querySelector('.products-table tbody');
+        if (!tbody) return;
+
+        // allRows is the DOM list of all product rows (static for this DOM)
+        const allRows = Array.from(tbody.querySelectorAll('.data-row'));
+
+        // Build items array with parsed sortable values from DOM
+        const buildItemFromRow = (row) => {
+            const tds = row.querySelectorAll('td');
+            const getText = (idx) => (tds[idx] ? tds[idx].innerText.trim() : '');
+            const parseNumber = txt => {
+                if (!txt) return 0;
+                const n = txt.replace(/[^\d\-]/g, '');
+                return n ? parseInt(n, 10) : 0;
+            };
+            return {
+                row: row,
+                category: getText(1).toLowerCase(),
+                name: getText(2).toLowerCase(),
+                description: (tds[3] ? tds[3].innerText.trim() : '').toLowerCase(),
+                price: parseNumber(getText(4)),
+                discount: parseNumber(getText(5)),
+                stock: parseNumber(getText(6)),
+                brand: getText(7).toLowerCase(),
+                isNew: row.querySelector('.badge-new') ? 1 : 0
+            };
+        };
+
+        // initial items (represents full dataset)
+        const allItems = allRows.map(buildItemFromRow);
+        let items = allItems.slice(); // mutable working set (after filtering)
+        let rowsElems = items.map(i => i.row);
+
+        // Sorting state
+        const headerElements = Array.from(document.querySelectorAll('.products-table thead th.sortable'));
+        let currentSort = { key: null, dir: null }; // dir: 'asc' or 'desc'
+
+        function setSortIndicator(header, dir) {
+            headerElements.forEach(h => {
+                const ind = h.querySelector('.sort-indicator');
+                if (h === header) ind.textContent = dir === 'asc' ? '▲' : dir === 'desc' ? '▼' : '';
+                else ind.textContent = '';
+            });
+        }
+
+        function compareValues(a, b, key, dir) {
+            const va = a[key];
+            const vb = b[key];
+            const isNum = (typeof va === 'number' && typeof vb === 'number');
+            if (isNum) {
+                return dir === 'asc' ? va - vb : vb - va;
+            } else {
+                if (va < vb) return dir === 'asc' ? -1 : 1;
+                if (va > vb) return dir === 'asc' ? 1 : -1;
+                return 0;
+            }
+        }
+
+        // Attach header click handlers for sorting
+        headerElements.forEach(h => {
+            const newH = h.cloneNode(true);
+            h.parentNode.replaceChild(newH, h);
+        });
+        const headers = Array.from(document.querySelectorAll('.products-table thead th.sortable'));
+
+        headers.forEach(h => {
+            h.addEventListener('click', function () {
+                const key = this.dataset.sort;
+                // toggle dir
+                let dir = 'asc';
+                if (currentSort.key === key) dir = currentSort.dir === 'asc' ? 'desc' : 'asc';
+                currentSort = { key, dir };
+
+                // sort items and re-append rows in that order
+                items.sort((a, b) => compareValues(a, b, key, dir));
+                items.forEach(it => tbody.appendChild(it.row));
+                // update rowsElems used by pagination
+                rowsElems = items.map(i => i.row);
+
+                // update indicators
+                setSortIndicator(this, dir);
+
+                // refresh pagination & go to first page
+                currentPage = 1;
+                showPage(currentPage);
+            });
+        });
+
+        // Pagination variables & functions (use rowsElems)
+        const pageSizeSelect = document.getElementById('pageSize');
+        const pageNumbersContainer = document.getElementById('pageNumbers');
+        const firstBtn = document.getElementById('firstPage');
+        const prevBtn = document.getElementById('prevPage');
+        const nextBtn = document.getElementById('nextPage');
+        const lastBtn = document.getElementById('lastPage');
+
+        let pageSize = parseInt(pageSizeSelect.value, 10) || 10;
+        let currentPage = 1;
+
+        function calculateTotalPages() {
+            return pageSize > 0 ? Math.max(1, Math.ceil(rowsElems.length / pageSize)) : 1;
+        }
+
+        function renderPageNumbers() {
+            pageNumbersContainer.innerHTML = '';
+            const totalPages = calculateTotalPages();
+            const maxButtons = 7;
+            let start = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+            let end = Math.min(totalPages, start + maxButtons - 1);
+            if (end - start + 1 < maxButtons) {
+                start = Math.max(1, end - maxButtons + 1);
+            }
+            for (let i = start; i <= end; i++) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'page-btn' + (i === currentPage ? ' active' : '');
+                btn.textContent = i;
+                btn.dataset.page = i;
+                btn.addEventListener('click', function () {
+                    currentPage = parseInt(this.dataset.page, 10);
+                    showPage(currentPage);
+                });
+                pageNumbersContainer.appendChild(btn);
+            }
+        }
+
+        function showPage(page) {
+            const totalPages = calculateTotalPages();
+            if (page < 1) page = 1;
+            if (page > totalPages) page = totalPages;
+            currentPage = page;
+            const startIndex = (currentPage - 1) * pageSize;
+            const endIndex = startIndex + pageSize;
+
+            // hide/show based on current rowsElems array (which is ordered)
+            // iterate allRows to ensure filtered-out rows are hidden
+            allRows.forEach(r => r.style.display = 'none');
+
+            rowsElems.forEach((r, idx) => {
+                if (idx >= startIndex && idx < endIndex) r.style.display = '';
+                else r.style.display = 'none';
+            });
+
+            // If no results (rowsElems empty), show a helpful message row
+            let existingNoResults = document.getElementById('noResultsRow');
+            if (rowsElems.length === 0) {
+                if (!existingNoResults) {
+                    const tr = document.createElement('tr');
+                    tr.id = 'noResultsRow';
+                    tr.innerHTML = '<td colspan="10" class="text-center text-muted">Không tìm thấy sản phẩm phù hợp</td>';
+                    tbody.appendChild(tr);
+                    existingNoResults = tr;
+                } else {
+                    existingNoResults.style.display = '';
+                }
+            } else if (existingNoResults) {
+                existingNoResults.style.display = 'none';
+            }
+
+            renderPageNumbers();
+            prevBtn.disabled = currentPage === 1;
+            firstBtn.disabled = currentPage === 1;
+            nextBtn.disabled = currentPage === totalPages;
+            lastBtn.disabled = currentPage === totalPages;
+        }
+
+        // Events for pagination controls -- replace nodes to avoid duplicate listeners
+        function replaceAndGet(id) {
+            const el = document.getElementById(id);
+            if (!el) return null;
+            const clone = el.cloneNode(true);
+            el.parentNode.replaceChild(clone, el);
+            return clone;
+        }
+
+        const pageSizeSelectNew = replaceAndGet('pageSize') || pageSizeSelect;
+        const firstBtnNew = replaceAndGet('firstPage') || firstBtn;
+        const prevBtnNew = replaceAndGet('prevPage') || prevBtn;
+        const nextBtnNew = replaceAndGet('nextPage') || nextBtn;
+        const lastBtnNew = replaceAndGet('lastPage') || lastBtn;
+
+        pageSizeSelectNew.addEventListener('change', function () {
+            pageSize = parseInt(this.value, 10) || 10;
+            currentPage = 1;
+            showPage(currentPage);
+        });
+        firstBtnNew.addEventListener('click', function () { showPage(1); });
+        prevBtnNew.addEventListener('click', function () { showPage(currentPage - 1); });
+        nextBtnNew.addEventListener('click', function () { showPage(currentPage + 1); });
+        lastBtnNew.addEventListener('click', function () { showPage(calculateTotalPages()); });
+
+        // CLIENT-SIDE SEARCH (no AJAX)
+        const searchForm = document.getElementById('searchForm');
+        const clearBtn = document.getElementById('clearSearch');
+        const qInput = document.getElementById('q');
+
+        function applyFilter(q) {
+            const term = (q || '').trim().toLowerCase();
+            if (!term) {
+                items = allItems.slice();
+            } else {
+                items = allItems.filter(it => {
+                    return (it.name && it.name.indexOf(term) !== -1) ||
+                        (it.description && it.description.indexOf(term) !== -1) ||
+                        (it.brand && it.brand.indexOf(term) !== -1) ||
+                        (it.category && it.category.indexOf(term) !== -1) ||
+                        (String(it.price).indexOf(term) !== -1) ||
+                        (String(it.discount).indexOf(term) !== -1);
+                });
+            }
+
+            // apply current sort if any
+            if (currentSort.key) {
+                items.sort((a, b) => compareValues(a, b, currentSort.key, currentSort.dir));
+            }
+
+            rowsElems = items.map(i => i.row);
+
+            // re-append visible items (keeps ordering for sorting)
+            rowsElems.forEach(r => tbody.appendChild(r));
+
+            showPage(1);
+        }
+
+        if (searchForm) {
+            // prevent full page submit; perform client-side filter
+            searchForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+                applyFilter(qInput ? qInput.value : '');
+            });
+        }
+        if (clearBtn) {
+            clearBtn.addEventListener('click', function () {
+                if (qInput) qInput.value = '';
+                applyFilter('');
+            });
+        }
+
+        // initial render: default sort (if any) preserved by server order; show page 1
+        showPage(1);
+    }
+</script>

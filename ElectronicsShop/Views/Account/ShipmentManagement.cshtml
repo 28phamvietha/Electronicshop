@@ -1,0 +1,248 @@
+@{
+    ViewBag.Title = "Quản lý địa chỉ";
+    Layout = "~/Views/Shared/_CustomerLayout.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/wwwroot/css/shipment-management.css">
+    <style>
+        /*  */
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #FBFBFC;
+            font-size: 14px; 
+        }
+
+        /*  */
+        .user-sidebar {
+            padding: 20px;
+            background: #fff;
+            border: 1px solid #E4E7ED;
+            margin-bottom: 30px;
+        }
+
+        .user-avatar-section {
+            display: flex;
+            align-items: center;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #E4E7ED;
+            margin-bottom: 20px;
+        }
+
+            .user-avatar-section img {
+                width: 50px;
+                height: 50px;
+                border-radius: 50%;
+                margin-right: 15px;
+                border: 1px solid #D10024;
+            }
+
+        .user-sidebar .nav-link {
+            color: #2B2D42;
+            display: block;
+            padding: 10px 0;
+            transition: 0.2s all;
+            font-weight: 500;
+        }
+
+            .user-sidebar .nav-link:hover, .user-sidebar .nav-link.active {
+                color: #D10024; 
+                text-decoration: none;
+            }
+
+        
+        .address-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #E4E7ED;
+            margin-bottom: 20px;
+        }
+
+            .address-header h4 {
+                margin: 0;
+                text-transform: uppercase;
+                font-weight: 700;
+            }
+
+        /*  */
+        .btn-add-address {
+            background-color: #D10024;
+            color: #FFF;
+            border: none;
+            padding: 10px 20px;
+            font-weight: 700;
+            text-transform: uppercase;
+            border-radius: 0;
+            transition: 0.2s all;
+        }
+
+            .btn-add-address:hover {
+                background-color: #15161D;
+                color: #FFF;
+            }
+
+        .address-list-title {
+            font-weight: 700;
+            margin: 20px 0;
+            color: #2B2D42;
+        }
+
+        
+        .profile-info {
+            background: #fff;
+            border: 1px solid #E4E7ED;
+            padding: 18px;
+            border-radius: 6px;
+        }
+
+            .profile-info dt {
+                font-weight: 700;
+                color: #2B2D42;
+            }
+
+            .profile-info dd {
+                margin-left: 0;
+                margin-bottom: 12px;
+                color: #444;
+            }
+    </style>
+}
+
+<div class="section">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="user-sidebar">
+                    <div class="user-avatar-section">
+                        <img src="https://inkythuatso.com/uploads/thumbnails/800/2021/12/logo-dai-hoc-cong-nghiep-ha-noi-inkythuatso-01-21-16-44-16.jpg" alt="User">
+                        <div>
+                            <strong style="display:block">@ViewBag.Username</strong>
+                        </div>
+                    </div>
+                    <nav>
+                        <a href="#" class="nav-link"><i class="fa fa-user-o"></i> Tài khoản của tôi</a>
+                        <div style="padding-left: 20px;">
+                            <a href="" class="nav-link">Hồ sơ</a>
+                        </div>
+                        <a href="@Url.Action("OrderHistory", "Cart")" class="nav-link"><i class="fa fa-file-text-o"></i> Đơn Mua</a>
+                        <a href="@Url.Action("Logout", "Account")" class="nav-link text-danger"><i class="fa fa-sign-out"></i> Đăng xuất</a>
+                    </nav>
+                </div>
+            </div>
+
+            <div class="col-md-9">
+                <div class="address-content" style="background: #fff; padding: 30px; border: 1px solid #E4E7ED;">
+                    <div class="address-header">
+                        <h4>Thông tin của tôi</h4>
+                    </div>
+
+                    <div class="address-list">
+                        @if (ViewBag.ProfileMessage != null)
+                        {
+                            <div class="alert alert-info">@ViewBag.ProfileMessage</div>
+                        }
+
+                        @if (ViewBag.User != null)
+                        {
+                            var currentUser = ViewBag.User as ElectronicsShop.Models.User;
+
+                            <div class="profile-info" id="profile-display">
+                                <dl class="row mb-0">
+                                    <dt class="col-sm-4">Họ</dt>
+                                    <dd class="col-sm-8">@(currentUser?.last_name)</dd>
+
+                                    <dt class="col-sm-4">Tên</dt>
+                                    <dd class="col-sm-8">@(currentUser?.first_name)</dd>
+
+                                    <dt class="col-sm-4">Email</dt>
+                                    <dd class="col-sm-8">@(currentUser?.email ?? "-")</dd>
+
+                                    <dt class="col-sm-4">Số điện thoại</dt>
+                                    <dd class="col-sm-8">@(currentUser?.phone ?? "-")</dd>
+
+                                    <dt class="col-sm-4">Địa chỉ</dt>
+                                    <dd class="col-sm-8">@(currentUser?.address ?? "-")</dd>
+                                </dl>
+
+                                <div class="row">
+                                    <button id="btn-edit" class="btn btn-secondary btn-sm me-2">
+                                        Chỉnh sửa thông tin
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- FORM -->
+                            <div class="profile-info mt-3" id="profile-form" style="display:none;">
+                                @using (Html.BeginForm("UpdateProfile", "Account", FormMethod.Post, new { @class = "row g-3" }))
+                                {
+                                    @Html.AntiForgeryToken()
+
+                                    <div class="col-md-6">
+                                        <label class="form-label">Họ</label>
+                                        <input type="text" name="first_name" value="@(currentUser?.last_name)" class="form-control" />
+                                        <br />
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label">Tên</label>
+                                        <input type="text" name="last_name" value="@(currentUser?.first_name)" class="form-control" />
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label">Email</label>
+                                        <input type="email" name="email" value="@(currentUser?.email)" class="form-control" />
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label">Số điện thoại</label>
+                                        <input type="text" name="phone" value="@(currentUser?.phone)" class="form-control" />
+                                        <br /> 
+                                    </div>
+                                    
+                                    <div class="col-md-12">
+                                        <label>Địa chỉ</label>
+                                        <input type="text" name="address" value="@(currentUser?.address)" class="form-control" />
+                                        <br /> <br />
+                                    </div>
+
+                                    <div class="row my-2 text-center"> 
+                                        <button type="submit" class="col-2 btn btn-success btn-sm">Lưu thay đổi</button>
+                                        <button type="button" id="btn-cancel" class="col-2 btn btn-secondary btn-sm ms-2">Hủy</button>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-warning">Không tìm thấy thông tin người dùng.</div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>(function () {
+            var btnEdit = document.getElementById('btn-edit');
+            var btnCancel = document.getElementById('btn-cancel');
+            var display = document.getElementById('profile-display');
+            var form = document.getElementById('profile-form');
+
+            if (btnEdit) {
+                btnEdit.addEventListener('click', function () {
+                    if (display) display.style.display = 'none';
+                    if (form) form.style.display = 'block';
+                });
+            }
+            if (btnCancel) {
+                btnCancel.addEventListener('click', function () {
+                    if (form) form.style.display = 'none';
+                    if (display) display.style.display = 'block';
+                });
+            }
+        })();</script>
+}

@@ -1,0 +1,137 @@
+#order-detail {
+    min-height: 100vh;
+    background-size: cover;
+    font-family: 'Lato', sans-serif;
+    color: rgba(116, 116, 116, 0.667);
+    background: linear-gradient(140deg, #fff, 50%, #BA68C8);
+    width: 60%;
+    margin: auto;
+
+}
+
+#order-detail .container-fluid {
+    margin-top: 200px;
+}
+
+#order-detail  p {
+    font-size: 15px;
+    margin-bottom: 7px;
+
+}
+
+#order-detail .card-body {
+    font-size: 15px;
+}
+
+#order-detail  h6 {
+    font-size: 15px;
+}
+
+#order-detail .small {
+    letter-spacing: 0.5px !important;
+}
+
+#order-detail .card-1 {
+    box-shadow: 2px 2px 10px 0px rgb(190, 108, 170);
+}
+
+#order-detail  hr {
+    background-color: rgba(248, 248, 248, 0.667);
+}
+
+
+#order-detail .bold {
+    font-weight: 500;
+}
+
+#order-detail .change-color {
+    color: #AB47BC !important;
+}
+
+#order-detail .card-2 {
+    box-shadow: 1px 1px 3px 0px rgb(112, 115, 139);
+
+}
+
+#order-detail .fa-circle.active {
+    font-size: 8px;
+    color: #AB47BC;
+}
+
+#order-detail .fa-circle {
+    font-size: 8px;
+    color: #aaa;
+}
+
+#order-detail .rounded {
+    border-radius: 2.25rem !important;
+}
+
+
+#order-detail .progress-bar {
+    background-color: #AB47BC !important;
+}
+
+
+#order-detail .progress {
+    height: 5px !important;
+    margin-bottom: 0;
+}
+
+#order-detail .invoice {
+    position: relative;
+    top: -70px;
+}
+
+#order-detail .Glasses {
+    position: relative;
+    top: -12px !important;
+}
+
+#order-detail .card-footer {
+    background-color: #AB47BC;
+    color: #fff;
+}
+
+h2 {
+    color: rgb(78, 0, 92);
+    letter-spacing: 2px !important;
+}
+
+#order-detail .display-3 {
+    font-weight: 500 !important;
+}
+
+@media (max-width: 479px) {
+    .invoice {
+        position: relative;
+        top: 7px;
+    }
+
+    .border-line {
+        border-right: 0px solid rgb(226, 206, 226) !important;
+    }
+
+}
+
+@media (max-width: 700px) {
+
+    h2 {
+        color: rgb(78, 0, 92);
+        font-size: 17px;
+    }
+
+    .display-3 {
+        font-size: 28px;
+        font-weight: 500 !important;
+    }
+}
+
+#order-detail .card-footer small {
+    letter-spacing: 7px !important;
+    font-size: 12px;
+}
+
+#order-detail .border-line {
+    border-right: 1px solid rgb(226, 206, 226)
+}

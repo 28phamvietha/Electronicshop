@@ -1,0 +1,178 @@
+﻿@model IEnumerable<ElectronicsShop.Models.Product>
+
+@{
+    ViewBag.Title = "Xem sản phẩm theo danh mục";
+    Layout = "~/Views/Shared/_CustomerLayout.cshtml";
+}
+
+
+
+@section Styles {
+    <style>
+        /* Scoped styles for category product grid + pagination */
+        #category-products .product-item {
+            margin-bottom: 24px;
+        }
+
+        #search-paging {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 18px;
+            margin-left: 100px;
+        }
+
+            #category-paging .page-btn {
+                padding: 6px 10px;
+                border-radius: 4px;
+                border: 1px solid #e3e6ea;
+                background: #fff;
+                cursor: pointer;
+            }
+
+                #category-paging .page-btn.active {
+                    background: #D10024;
+                    color: #fff;
+                    border-color: #D10024;
+                }
+
+            #category-paging .page-size {
+                width: 100px;
+            }
+        /* keep layout consistent on small screens */
+        @@media (max-width:767px) {
+            #category-products .product-item {
+                margin-bottom: 16px;
+            }
+        }
+
+        .product .product-body .product-name,
+        .product .product-body .product-name a {
+            display: block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+    </style>
+}
+
+<h3 style="margin:20px 100px;">
+    Kết quả tìm kiếm cho: "@ViewBag.Query"
+</h3>
+
+<div class="col-md-12">
+    <div class="row" id="search-products" style="margin: 10px 100px;">
+        @* Render product cards as grid items; _Product partial should render card content *@
+        @foreach (var product in Model ?? Enumerable.Empty<ElectronicsShop.Models.Product>())
+        {
+            <div class="col-lg-3 col-md-4 col-sm-6 product-item">
+                @Html.Partial("_Product", product)
+            </div>
+        }
+    </div>
+
+    <!-- Pagination controls (client-side) -->
+    <div id="search-paging" aria-label="Pagination controls" class="mt-3">
+        <div>
+            <label for="catPageSize" style="color: white;">Số sản phẩm / trang</label>
+            <select id="catPageSize" class="form-select page-size">
+                <option value="5" selected>5</option>
+                <option value="10">10</option>
+                <option value="15">15</option>
+                <option value="20">20</option>
+            </select>
+        </div>
+
+        <div style="margin-left:auto; display:flex; gap:6px; align-items:center;">
+            <button id="catFirst" class="page-btn" type="button">&laquo; Đầu</button>
+            <button id="catPrev" class="page-btn" type="button">&lsaquo; Trước</button>
+            <div id="catPageNumbers" style="display:flex; gap:6px;"></div>
+            <button id="catNext" class="page-btn" type="button">Tiếp &rsaquo;</button>
+            <button id="catLast" class="page-btn" type="button">Cuối &raquo;</button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            document.addEventListener('DOMContentLoaded', function () {
+                const container = document.getElementById('search-products');
+                if (!container) return;
+
+                // NodeList -> array of element nodes (product item wrappers)
+                let rowsElems = Array.from(container.querySelectorAll('.product-item'));
+
+                // Pagination controls
+                const pageSizeSelect = document.getElementById('catPageSize');
+                const pageNumbersContainer = document.getElementById('catPageNumbers');
+                const firstBtn = document.getElementById('catFirst');
+                const prevBtn = document.getElementById('catPrev');
+                const nextBtn = document.getElementById('catNext');
+                const lastBtn = document.getElementById('catLast');
+
+                let pageSize = parseInt(pageSizeSelect.value, 10) || 12;
+                let currentPage = 1;
+
+                function calculateTotalPages() {
+                    return pageSize > 0 ? Math.max(1, Math.ceil(rowsElems.length / pageSize)) : 1;
+                }
+
+                function renderPageNumbers() {
+                    pageNumbersContainer.innerHTML = '';
+                    const totalPages = calculateTotalPages();
+                    const maxButtons = 7;
+                    let start = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+                    let end = Math.min(totalPages, start + maxButtons - 1);
+                    if (end - start + 1 < maxButtons) {
+                        start = Math.max(1, end - maxButtons + 1);
+                    }
+                    for (let i = start; i <= end; i++) {
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.className = 'page-btn' + (i === currentPage ? ' active' : '');
+                        btn.textContent = i;
+                        btn.dataset.page = i;
+                        btn.addEventListener('click', function () {
+                            currentPage = parseInt(this.dataset.page, 10);
+                            showPage(currentPage);
+                        });
+                        pageNumbersContainer.appendChild(btn);
+                    }
+                }
+
+                function showPage(page) {
+                    const totalPages = calculateTotalPages();
+                    if (page < 1) page = 1;
+                    if (page > totalPages) page = totalPages;
+                    currentPage = page;
+                    const startIndex = (currentPage - 1) * pageSize;
+                    const endIndex = startIndex + pageSize;
+                    rowsElems.forEach((el, idx) => {
+                        el.style.display = (idx >= startIndex && idx < endIndex) ? '' : 'none';
+                    });
+                    renderPageNumbers();
+                    prevBtn.disabled = currentPage === 1;
+                    firstBtn.disabled = currentPage === 1;
+                    nextBtn.disabled = currentPage === totalPages;
+                    lastBtn.disabled = currentPage === totalPages;
+                }
+
+                // Events
+                pageSizeSelect.addEventListener('change', function () {
+                    pageSize = parseInt(this.value, 10) || 12;
+                    currentPage = 1;
+                    showPage(currentPage);
+                });
+                firstBtn.addEventListener('click', function () { showPage(1); });
+                prevBtn.addEventListener('click', function () { showPage(currentPage - 1); });
+                nextBtn.addEventListener('click', function () { showPage(currentPage + 1); });
+                lastBtn.addEventListener('click', function () { showPage(calculateTotalPages()); });
+
+                // initial render
+                showPage(1);
+            });
+        })();</script>
+}

@@ -1,0 +1,51 @@
+﻿@model List<ElectronicsShop.Models.Wishlist>
+@using System.Globalization
+@{
+    var cultureInfo = new CultureInfo("vi-VN");
+}
+
+<div class="cart-list">
+    @if (Session["UserId"] == null)
+    {
+        <div class="product-widget">
+            <div class="product-body">
+                <h3 class="product-name"><a href="@Url.Action("Login","Account")">Vui lòng đăng nhập để xem danh sách yêu thích</a></h3>
+            </div>
+        </div>
+    }
+    else if (!Model.Any())
+    {
+        <div class="product-widget">
+            <div class="product-body">
+                <h3 class="product-name"><a href="@Url.Action("Index","Home")">Danh sách yêu thích trống</a></h3>
+            </div>
+        </div>
+    }
+    else
+    {
+        foreach (var w in Model)
+        {
+            var img = w.Product?.Product_Images?.FirstOrDefault()?.image_url ?? "noimage.png";
+            var price = w.Product?.discount_price ?? w.Product?.price ?? 0M;
+            <div class="product-widget">
+                <div class="product-img">
+                    <img src="~/Images/@img" alt="">
+                </div>
+                <div class="product-body">
+                    <h3 class="product-name"><a href="@Url.Action("Details", "Product", new { id = w.product_id })">@(w.Product?.product_name)</a></h3>
+                    <h4 class="product-price">@price.ToString("C0", cultureInfo)</h4>
+                </div>
+                @* Client-handled AJAX button (no form submit) *@
+                <button type="button"
+                        class="delete wishlist-remove"
+                        data-wishlistid="@w.wishlist_id"
+                        data-productid="@w.product_id">
+                    <i class="fa fa-close"></i>
+                </button>
+            </div>
+        }
+    }
+</div>
+<div class="cart-summary">
+    <h5>Tổng số: @Model.Count</h5>
+</div>

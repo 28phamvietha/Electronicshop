@@ -1,0 +1,128 @@
+﻿@{
+    ViewBag.Title = "Thanh toán VNPAY";
+    Layout = "~/Views/Shared/_CustomerLayout.cshtml";
+}
+
+<style>
+    .vnpay-box {
+        max-width: 500px;
+        margin: 50px auto;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        text-align: center;
+        background: #fff;
+    }
+
+    .spinner {
+        border: 5px solid #eee;
+        border-top: 5px solid #007bff;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+        margin: 20px auto;
+    }
+
+    @@keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    .btn {
+        padding: 10px 20px;
+        border: none;
+        margin: 10px;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+
+    .btn-success {
+        background: #28a745;
+        color: white;
+    }
+
+    .btn-danger {
+        background: #dc3545;
+        color: white;
+    }
+</style>
+
+<div class="vnpay-box">
+
+    <h2>VNPAY</h2>
+    <p id="statusText">Đang chuyển hướng đến cổng thanh toán...</p>
+
+    <!-- loading -->
+    <div id="loadingBox">
+        <div class="spinner"></div>
+        <p>Đang xử lý giao dịch...</p>
+    </div>
+
+    <!-- QR -->
+    <div id="qrBox" style="display:none;">
+        <h4>Quét mã để thanh toán</h4>
+
+        <img src="https://img.vietqr.io/image/VPB-2228102003-compact.png?addInfo=DH@ViewBag.OrderId" width="250" />
+        <br />
+        <h4>⏳ Thời gian thanh toán còn lại: <span id="countdown"></span></h4>
+        <h5>024H01270426K#@ViewBag.OrderId</h5>
+
+        <form method="post" action="@Url.Action("VNPayDemoConfirm","Cart")">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="orderId" value="@ViewBag.OrderId" />
+            <button type="submit" class="btn btn-success">
+                ✔ Tôi đã thanh toán
+            </button>
+        </form>
+
+        <form method="post" action="@Url.Action("VNPayDemoFail","Cart")">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="orderId" value="@ViewBag.OrderId" />
+            <button type="submit" class="btn btn-danger">
+                ❌ Huỷ thanh toán
+            </button>
+        </form>
+    </div>
+
+</div>
+
+<script>
+    // giả lập loading → hiện QR
+    setTimeout(function () {
+        document.getElementById("loadingBox").style.display = "none";
+        document.getElementById("qrBox").style.display = "block";
+        document.getElementById("statusText").innerText = "Quét mã QR để thanh toán";
+    }, 2000);
+
+    // 🔥 auto success sau 3s
+
+    const expireTime = new Date('@ViewBag.ExpireTime').getTime();
+
+    const countdown = setInterval(function () {
+        const now = new Date().getTime();
+        const distance = expireTime - now;
+
+        if (distance <= 0) {
+            clearInterval(countdown);
+            document.getElementById("countdown").innerHTML = "Hết thời gian!";
+
+            // 🔥 tự động xử lý khi hết hạn
+            window.location.href = '/Cart/VNPayDemoFail?orderId=@ViewBag.OrderId';
+            return;
+        }
+
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+        document.getElementById("countdown").innerHTML =
+            minutes + "m " + seconds + "s";
+
+    }, 1000);
+
+</script>

@@ -1,0 +1,77 @@
+﻿@model ElectronicsShop.Models.Product
+@using System.Globalization
+@{
+    var imageList = Model.Product_Images != null ? Model.Product_Images.ToList() : new List<ElectronicsShop.Models.Product_Images>();
+    var cultureInfo = new CultureInfo("vi-VN");
+    var wishlistIds = ViewBag.WishlistIds as List<int> ?? new List<int>();
+    bool isFav = wishlistIds.Contains(Model.product_id);
+}
+
+
+<div class="product">
+    <div class="product-img">
+        <img src="~/Images/@(imageList.Count > 0 ? imageList[0].image_url : "noimage.png")" alt="">
+        <div class="product-label">
+
+            @if (Model.discount_price != null && Model.price != null && Model.price != 0)
+            {
+                var discount = Math.Round((Model.price.Value - Model.discount_price.Value) * 100 / Model.price.Value);
+                <span class="sale">-@discount%</span>
+            }
+
+            @if (Model.is_new == true)
+            {
+                <span class="new">HOT</span>
+            }
+
+        </div>
+    </div>
+    <div class="product-body">
+        <p class="product-category">@Model.Category.category_name</p>
+        <h3 class="product-name">
+            <a title="@Html.Encode(Model.product_name)" href="@Url.Action("Details", "Product", new { id = @Model.product_id })">
+                @Model.product_name
+            </a>
+        </h3>
+        <del class="product-old-price">
+            @((Model.price ?? 0).ToString("C0", cultureInfo))
+        </del>
+
+        <h4 class="product-price">
+            @((Model.discount_price ?? 0).ToString("C0", cultureInfo))
+        </h4>
+        <div class="product-rating">
+            @for (int i = 0; i < 5; i++)
+            {
+                <i class="fa fa-star"></i>
+            }
+        </div>
+        <div class="product-btns">
+            <a href="javascript:void(0)"
+               class="wishlist-add"
+               data-productid="@Model.product_id"
+               title="Thêm vào yêu thích">
+                <i class="fa fa-heart @(isFav ? "text-danger" : "")"></i>
+            </a>
+            <button class="add-to-compare"><i class="fa fa-exchange"></i><span class="tooltipp">So sánh</span></button>
+            <a href="@Url.Action("Details", "Product", new { id = @Model.product_id })">
+                <i class="fa fa-eye"></i>
+            </a>
+        </div>
+        <div class="sold-bar">
+            <div class="sold-progress"></div>
+            <span>Đã bán @(new Random().Next(10,80))</span>
+        </div>
+    </div>
+
+    <div class="add-to-cart">
+        @using (Html.BeginForm("AddToCart", "Cart", FormMethod.Post))
+        {
+            <input type="hidden" name="productId" value="@Model.product_id" />
+            <input type="hidden" name="quantity" value="1" min="1" max="@Model.stock" />
+
+            
+        }
+    </div>
+</div>
+

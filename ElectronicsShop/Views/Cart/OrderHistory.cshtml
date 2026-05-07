@@ -1,0 +1,175 @@
+﻿@{
+    ViewBag.Title = "OrderHistory";
+    Layout = "~/Views/Shared/_CustomerLayout.cshtml";
+}
+@using System.Globalization
+@model IEnumerable<ElectronicsShop.Models.Order>
+@{
+    var shipmentAddresses = ViewBag.ShipmentAddresses as Dictionary<int, string>;
+    var productCounts = ViewBag.ProductCounts as Dictionary<int, int>;
+    var cultureInfo = new CultureInfo("vi-VN");
+}
+
+<style>
+    .table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0 10px; /* giảm khoảng cách */
+        margin-top: 20px;
+    }
+
+        .table thead th {
+            background-color: #15161D;
+            color: #fff;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 14px;
+            padding: 10px 12px;
+            border: none;
+            text-align: left;
+        }
+
+            .table thead th:first-child {
+                border-radius: 6px 0 0 6px;
+            }
+
+            .table thead th:last-child {
+                border-radius: 0 6px 6px 0;
+            }
+
+        /* ROW */
+        .table tbody tr {
+            background-color: #fff;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border-radius: 6px;
+        }
+
+            .table tbody tr:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(209, 0, 36, 0.15);
+            }
+
+        /* CELL */
+        .table tbody td {
+            padding: 10px 12px; /* giảm chiều cao */
+            font-size: 14px;
+            border: none;
+            color: #333;
+        }
+
+            /* bo góc row */
+            .table tbody td:first-child {
+                border-radius: 6px 0 0 6px;
+                font-weight: 600;
+            }
+
+            .table tbody td:last-child {
+                border-radius: 0 6px 6px 0;
+            }
+
+        /* PRICE */
+        .table .price-text {
+            color: #D10024;
+            font-weight: 600;
+        }
+
+    /* STATUS */
+    .status-badge {
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        display: inline-block;
+    }
+
+    /* màu nhẹ giống hình */
+    .st-processing {
+        background: #fff3cd;
+        color: #d39e00;
+    }
+
+    .st-shipping {
+        background: #d4edda;
+        color: #28a745;
+    }
+
+    .st-shipped {
+        background: #cce5ff;
+        color: #007bff;
+    }
+
+    .st-cancelled {
+        background: #f8d7da;
+        color: #dc3545;
+    }
+
+    .st-default {
+        background: #e2e3e5;
+        color: #6c757d;
+    }
+</style>
+
+<div class="container" style="padding-bottom: 50px;">
+    <h2 class="text-uppercase" style="margin: 30px 0; font-weight: 700; border-left: 5px solid #D10024; padding-left: 15px;">
+        Đơn hàng đã đặt
+    </h2>
+
+    @if (Model != null && Model.Any())
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Mã đơn (#ID)</th>
+                    <th>Ngày đặt</th>
+                    <th>Tổng tiền</th>
+                    <th>Trạng thái</th>
+                    <th>Địa chỉ giao hàng</th>
+                    <th>Số lượng sản phẩm</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var order in Model)
+                {
+                    string cssClass = "st-default";
+                    string statusVi = order.status;
+
+                    switch (order.status?.ToLower())
+                    {
+                        case "processing": cssClass = "st-processing"; statusVi = "Đang xử lý"; break;
+                        case "shipping": cssClass = "st-shipping"; statusVi = "Đang vận chuyển"; break;
+                        case "delivered": cssClass = "st-shipped"; statusVi = "Đã giao"; break;
+                        case "cancelled": cssClass = "st-cancelled"; statusVi = "Đã hủy"; break;
+                    }
+                    <tr onclick="location.href='@Url.Action("OrderDetails", "Cart", new { id = order.order_id })'">
+                        <td style="font-weight:bold;">#@order.order_id</td>
+
+                        <td>@(((DateTime)order.order_date).ToString("dd/MM/yyyy HH:mm"))</td>
+
+                        <td class="price-text">
+                            @String.Format(cultureInfo, "{0:C0}", order.total_amount ?? 0)
+                        </td>
+
+                        <td>
+                            <span class="status-badge @cssClass">@statusVi</span>
+                        </td>
+                        <td>
+                            <i class="fa fa-map-marker" style="color:#D10024; margin-right:5px;"></i>
+                            @(shipmentAddresses.ContainsKey(order.order_id) ? shipmentAddresses[order.order_id] : "---")
+                        </td>
+                        <td style="font-weight:bold;">
+                            @(productCounts.ContainsKey(order.order_id) ? productCounts[order.order_id] : 0)
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <div class="alert alert-warning text-center">
+            Bạn chưa đặt bất kỳ đơn hàng nào. <a href="@Url.Action("Index", "Home")" style="font-weight:bold;">Mua sắm ngay</a>
+        </div>
+    }
+</div>

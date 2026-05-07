@@ -1,0 +1,271 @@
+﻿@{
+    ViewBag.Title = "OrderDetails";
+    Layout = "~/Views/Shared/_CustomerLayout.cshtml";
+}
+
+@model IEnumerable<ElectronicsShop.Models.Order_Items>
+@using System.Globalization
+@{
+    var cultureInfo = new CultureInfo("vi-VN");
+    var order = Model?.FirstOrDefault()?.Order;
+    var shipment = order?.Shipment;
+    var user = order?.User;
+
+    string statusVi = order?.status;
+
+    switch (order?.status?.ToLower())
+    {
+        case "processing": statusVi = "Đang xử lý"; break;
+        case "shipping": statusVi = "Đang vận chuyển"; break;
+        case "delivered": statusVi = "Đã giao"; break;
+        case "cancelled": statusVi = "Đã hủy"; break;
+    }
+}
+
+@section Styles {
+    <style>
+        /* MAIN WRAPPER */
+        #order-detail {
+            width: 100%;
+            background: #f5f6f8;
+            color: #222;
+            padding: 20px 0;
+        }
+
+            /* MAIN CARD */
+            #order-detail .card-main {
+                max-width: 900px;
+                margin: auto;
+                border-radius: 14px;
+                border: none;
+                background: #fff;
+                box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+                overflow: hidden;
+            }
+
+            /* HEADER */
+            #order-detail .card-header {
+                background: #fff;
+                border-bottom: 1px solid #eee;
+                padding: 18px 20px;
+            }
+
+            /* STATUS BADGE (xịn hơn) */
+            #order-detail .badge {
+                font-size: 13px;
+                font-weight: 600;
+                border-radius: 20px;
+                padding: 6px 14px;
+            }
+
+            /* PRODUCT ITEM */
+            #order-detail .card-item {
+                border: 1px solid #eee;
+                border-radius: 10px;
+                background: #fff;
+                transition: all 0.2s ease;
+            }
+
+                #order-detail .card-item:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+                }
+
+            /* PRODUCT IMAGE */
+            #order-detail img {
+                border-radius: 8px;
+                object-fit: cover;
+            }
+
+            /* TEXT */
+            #order-detail h1,
+            #order-detail h2,
+            #order-detail h3,
+            #order-detail h4,
+            #order-detail h5,
+            #order-detail h6 {
+                color: #222;
+                margin: 0;
+            }
+
+            #order-detail p,
+            #order-detail span,
+            #order-detail small {
+                color: #555;
+            }
+
+            /* PRICE */
+            #order-detail .text-danger {
+                color: #d10024 !important;
+                font-weight: 700;
+            }
+
+            /* FOOTER (TOTAL BOX) */
+            #order-detail .card-footer {
+                background: #fafafa;
+                border-top: 1px solid #eee;
+                padding: 20px;
+            }
+
+                #order-detail .card-footer hr {
+                    margin: 10px 0;
+                }
+
+        /* RESPONSIVE */
+        @@media (max-width: 576px) {
+            #order-detail .card-main {
+                border-radius: 10px;
+            }
+
+            #order-detail .card-header {
+                text-align: center;
+            }
+
+            #order-detail .card-footer {
+                padding: 15px;
+            }
+        }
+
+        #order-detail table thead th {
+            text-align: center;
+            vertical-align: middle;
+        }
+    </style>
+}
+
+@if (Model != null && Model.Any())
+{
+    decimal totalOrderAmount = 0;
+
+    <div id="order-detail" class="my-4">
+        <div class="container">
+            <div class="card card-main shadow-sm">
+
+                <!-- HEADER -->
+                <div class="card-header border-bottom">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap">
+                        <div>
+                            <h5 class="mb-1 fw-bold">
+                                Đơn hàng #@(order != null ? order.order_id : 0)
+                            </h5>
+                            <small class="text-muted">
+                                @(order != null && order.order_date != null
+                                    ? ((DateTime)order.order_date).ToString("dd/MM/yyyy HH:mm")
+                                    : "")
+                            </small>
+                        </div>
+
+                        <div>
+                            <span class="badge px-3 py-2
+                                @(order != null && order.status == "processing" ? "bg-warning" :
+                                  order != null && order.status == "shipping" ? "bg-info" :
+                                  order != null && order.status == "delivered" ? "bg-success" :
+                                  "bg-danger")">
+                                @statusVi
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- INFO -->
+                <div class="card-body border-bottom">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-1"><b>Người nhận:</b> @(user != null ? user.last_name : "") @(user != null ? user.first_name : "")</p>
+                            <p class="mb-1"><b>SĐT:</b> @(user != null ? user.phone : "")</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-1">
+                                <b>Địa chỉ:</b>
+                                @(shipment != null ? shipment.shipment_address : "")
+                                
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PRODUCT LIST -->
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered align-middle text-center">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="text-center">Ảnh</th>
+                                    <th class="text-center">Sản phẩm</th>
+                                    <th class="text-center">Đơn giá</th>
+                                    <th class="text-center">Số lượng</th>
+                                    <th class="text-center">Thành tiền</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model)
+                                {
+                                    if (item.price.HasValue)
+                                    {
+                                        var totalPrice = item.price.Value * (item.quantity ?? 0);
+                                        totalOrderAmount += totalPrice;
+                                        var image = item.Product?.Product_Images?.FirstOrDefault()?.image_url ?? "default.png";
+                                        <tr>
+                                            <!-- ẢNH -->
+                                            <td style="width:90px;">
+                                                <img src="~/Images/@image"
+                                                     class="img-fluid"
+                                                     style="max-height:70px;" />
+                                            </td>
+
+                                            <!-- TÊN -->
+                                            <td class="text-start">
+                                                <b>@(item.Product?.product_name ?? "Không có tên")</b>
+                                            </td>
+
+                                            <!-- ĐƠN GIÁ -->
+                                            <td>
+                                                @item.price.Value.ToString("C0", cultureInfo)
+                                            </td>
+
+                                            <!-- SỐ LƯỢNG -->
+                                            <td>
+                                                x @item.quantity
+                                            </td>
+
+                                            <!-- THÀNH TIỀN -->
+                                            <td class="text-danger fw-bold">
+                                                @totalPrice.ToString("C0", cultureInfo)
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- TOTAL -->
+                <div class="card-footer bg-light">
+                    <div class="d-flex justify-content-end">
+                        <div style="min-width:300px;">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Tạm tính:</span>
+                                <span>@totalOrderAmount.ToString("C0", cultureInfo)</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Phí vận chuyển:</span>
+                                <span>0 đ</span>
+                            </div>
+                            <hr />
+                            <div class="d-flex justify-content-between fw-bold fs-5 text-danger">
+                                <span>Tổng tiền:</span>
+                                <span>@totalOrderAmount.ToString("C0", cultureInfo)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <p class="text-center">Không có thông tin chi tiết cho đơn hàng này.</p>
+}

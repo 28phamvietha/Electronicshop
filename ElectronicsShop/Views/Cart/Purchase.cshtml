@@ -1,0 +1,243 @@
+﻿@{
+    ViewBag.Title = "Purchase";
+    Layout = "~/Views/Shared/_CustomerLayout.cshtml";
+}
+@using System.Globalization
+@{
+    var cultureInfo = new CultureInfo("vi-VN");
+}
+@model ElectronicsShop.Models.User
+@{
+    var carts = Model.Carts.ToList();
+    var totalAmount = carts.Sum(x => x.Product.discount_price * x.quantity);
+    var orderId = new Random().Next(10000, 99999);
+}
+
+@using (Html.BeginForm("Purchase", "Cart", FormMethod.Post, new { id = "purchase-form" }))
+{
+    <input type="hidden" id="totalAmount" value="@totalAmount" />
+    <input type="hidden" id="orderId" value="@orderId" />
+
+    <div class="section">
+        <div class="container">
+            <div class="row">
+
+                <div class="col-md-7">
+                    <div class="billing-details">
+                        <div class="section-title">
+                            <h3 class="title">Địa chỉ thanh toán</h3>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Tên</label>
+                            <input class="input" type="text" name="recipient_first_name" value="@Model.first_name">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Họ đệm</label>
+                            <input class="input" type="text" name="recipient_last_name" value="@Model.last_name">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Số điện thoại</label>
+                            <input class="input" type="tel" name="recipient_phone" value="@Model.phone">
+                        </div>
+
+                        <!-- ✅ PROVINCE -->
+                        <div class="form-group">
+                            <label>Tỉnh / Thành phố</label>
+                            <select id="province" class="form-control">
+                                <option value="">-- Chọn tỉnh --</option>
+                            </select>
+                        </div>
+
+                        <!-- ✅ WARD -->
+                        <div class="form-group">
+                            <label>Xã / Phường</label>
+                            <select id="ward" class="form-control">
+                                <option value="">-- Chọn xã --</option>
+                            </select>
+                        </div>
+
+                        <!-- ✅ ADDRESS -->
+                        <div class="form-group">
+                            <label>Số nhà</label>
+                            <input class="input" type="text" name="address" value="@Model.address">
+                        </div>
+
+                        <!-- ✅ ZIP -->
+                        <div class="form-group">
+                            <label>ZIP Code</label>
+                            <input class="input" type="text" name="zipCode">
+                        </div>
+                    </div>
+                
+
+                <!-- ✅ HIDDEN (QUAN TRỌNG) -->
+                <input type="hidden" id="cityHidden" name="province" />
+                <input type="hidden" id="wardHidden" name="ward" />
+
+                <div class="shipping-details">
+                    <div class="section-title">
+                        <h3 class="title">Địa chỉ giao hàng</h3>
+                    </div>
+                    <div class="input-checkbox">
+                        <input type="checkbox" id="shipping-address-checkbox">
+                        <label for="shipping-address-checkbox">
+                            <span></span>
+                            Gửi đến một địa chỉ khác?
+                        </label>
+                        <div class="caption" id="shipping-form">
+                            <div class="form-group">
+                                <input class="input" type="text" id="shipping_first_name" name="recipient_first_name" placeholder="Tên">
+                            </div>
+                            <div class="form-group">
+                                <input class="input" type="text" id="shipping_last_name" name="recipient_last_name" placeholder="Họ và tên đệm">
+                            </div>
+                            <div class="form-group">
+                                <input class="input" type="tel" id="shipping_phone" name="recipient_phone" placeholder="Điện thoại">
+                            </div>
+                            <div class="form-group">
+                                <label>Tỉnh / Thành phố</label>
+                                <select id="province" class="form-control">
+                                    <option value="">-- Chọn tỉnh --</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Xã / Phường</label>
+                                <select id="ward" class="form-control">
+                                    <option value="">-- Chọn xã --</option>
+                                </select>
+                            </div>
+                            <input type="hidden" id="cityHidden" name="city" />
+                            <input type="hidden" id="wardHidden" name="ward" />
+                            <div class="form-group">
+                                <input class="input" type="text" id="shipping_address" name="address" placeholder="Địa chỉ">
+                            </div>
+
+                            <div class="form-group">
+                                <input class="input" type="text" id="shipping_zipCode" name="zipCode" placeholder="ZIP Code">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="order-notes">
+                    <textarea class="input" name="order_note" placeholder="Ghi chú đơn hàng"></textarea>
+                </div>
+            </div>
+
+                <div class="col-md-5 order-details">
+                    <div class="section-title text-center">
+                        <h3 class="title">Đơn hàng của bạn</h3>
+                    </div>
+                    <div class="order-summary">
+                        <div class="order-col">
+                            <div><strong>SẢN PHẨM</strong></div>
+                            <div><strong>TỔNG</strong></div>
+                        </div>
+                        <div class="order-products">
+                            @foreach (var product in carts)
+                            {
+                                <div class="order-col">
+                                    <div>
+                                        @product.quantity<span>x </span>@product.Product.product_name
+                                    </div>
+                                    <div>@((product.quantity * product.Product.discount_price).Value.ToString("C0", cultureInfo))</div>
+                                </div>
+                            }
+                        </div>
+                        <div class="order-col">
+                            <div>Phí vận chuyển</div>
+                            <div><strong>MIỄN PHÍ</strong></div>
+                        </div>
+                        <div class="order-col">
+                            <div><strong>TỔNG CỘNG</strong></div>
+                            <div><strong class="order-total" style="text-wrap: nowrap;">@totalAmount.Value.ToString("C0", cultureInfo)</strong></div>
+                        </div>
+                    </div>
+
+                    <div class="payment-method">
+                        <div class="input-radio">
+                            <input type="radio" name="paymentMethod" id="payment-vnpay" value="vnpay">
+                            <label for="payment-vnpay">
+                                <span></span>
+                                Thanh toán online (VNPAY)
+                            </label>
+                            <div class="caption">
+                                <p>Quét mã QR để thanh toán qua ngân hàng (MB Bank, Vietcombank...)</p>
+                            </div>
+                        </div>
+                        <div class="input-radio">
+                            <input type="radio" name="paymentMethod" id="payment-2" value="cod">
+                            <label for="payment-2">
+                                <span></span>
+                                Thanh toán khi nhận hàng
+                            </label>
+                        </div>
+                    </div>
+
+                    <input type="submit" value="Đặt hàng" class="primary-btn order-submit"  />
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<script>
+    const API = "https://provinces.open-api.vn/api/?depth=3";
+
+    let allData = [];
+    let selectedProvince = "";
+    let selectedWard = "";
+
+    // LOAD PROVINCE
+    fetch(API)
+        .then(res => res.json())
+        .then(data => {
+            allData = data;
+
+            const provinceSelect = document.getElementById("province");
+
+            data.forEach(p => {
+                let opt = document.createElement("option");
+                opt.value = p.code;
+                opt.textContent = p.name;
+                provinceSelect.appendChild(opt);
+            });
+        });
+
+    // CHỌN TỈNH
+    document.getElementById("province").addEventListener("change", function () {
+        const code = this.value;
+
+        selectedProvince = this.options[this.selectedIndex].text;
+
+        const wardSelect = document.getElementById("ward");
+        wardSelect.innerHTML = '<option value="">-- Chọn xã/phường --</option>';
+
+        let province = allData.find(p => p.code == code);
+        if (!province) return;
+
+        province.districts.forEach(d => {
+            d.wards.forEach(w => {
+                let opt = document.createElement("option");
+                opt.value = w.code;
+                opt.textContent = w.name;
+                wardSelect.appendChild(opt);
+            });
+        });
+    });
+
+    // CHỌN XÃ
+    document.getElementById("ward").addEventListener("change", function () {
+        selectedWard = this.options[this.selectedIndex].text;
+    });
+
+    // SUBMIT
+    document.getElementById("purchase-form").addEventListener("submit", function () {
+        document.getElementById("cityHidden").value = selectedProvince;
+        document.getElementById("wardHidden").value = selectedWard;
+    });
+</script>

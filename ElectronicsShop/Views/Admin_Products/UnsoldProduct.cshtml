@@ -1,0 +1,285 @@
+﻿@model IEnumerable<ElectronicsShop.Models.ProductContainer>
+
+@{
+    ViewBag.Title = "Sản phẩm bán chạy";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<style>
+    .selling-card {
+        background: #fff;
+        padding: 16px;
+        border-radius: 8px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    }
+
+    .selling-controls {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+    }
+
+        .selling-controls .form-group {
+            margin: 0;
+        }
+
+    .selling-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        .selling-table thead th {
+            text-align: left;
+            padding: 10px 12px;
+            font-weight: 700;
+            color: #0d6efd;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .selling-table tbody td {
+            padding: 12px;
+            border-bottom: 1px solid #f1f3f5;
+            vertical-align: middle;
+        }
+
+    .rank-badge {
+        display: inline-block;
+        min-width: 34px;
+        height: 34px;
+        line-height: 34px;
+        text-align: center;
+        border-radius: 6px;
+        background: #f1f5f9;
+        font-weight: 700;
+        color: #0d6efd;
+    }
+
+    .muted {
+        color: #6c757d;
+        font-size: 0.95rem;
+    }
+
+    .controls-right {
+        margin-left: auto;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .btn-ghost {
+        padding: 6px 10px;
+        border-radius: 6px;
+        border: 1px solid #dcdcdc;
+        background: #fff;
+        cursor: pointer;
+    }
+
+    .btn-primary {
+        background: #0d6efd;
+        color: #fff;
+        border: 1px solid #0d6efd;
+        padding: 6px 12px;
+        border-radius: 6px;
+    }
+
+    /* small screens */
+    @@media (max-width: 720px) {
+        .controls-right {
+            width: 100%;
+            justify-content: flex-start;
+        }
+    }
+</style>
+
+<div class="selling-card">
+    <div class="d-flex align-items-center mb-3">
+        <h4 class="mb-0">Sản phẩm không bán được</h4>
+    </div>
+
+    <div class="selling-controls">
+        <div class="form-group">
+            <label for="topN">Hiển thị</label>
+            <select id="topN" class="form-control">
+                <option value="3">Top 3</option>
+                <option value="5" selected>Top 5</option>
+                <option value="0">Tất cả</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="searchTerm">Tìm</label>
+            <input id="searchTerm" class="form-control" placeholder="Tìm theo tên hoặc danh mục" />
+        </div>
+
+        <div class="form-group">
+            <label for="sortBy">Sắp xếp</label>
+            <select id="sortBy" class="form-control">
+                <option value="sold_asc" selected>Theo số đã bán (tăng dần)</option>
+                <option value="sold_desc">Theo số đã bán (giảm dần)</option>
+                <option value="name_asc">Tên A→Z</option>
+                <option value="name_desc">Tên Z→A</option>
+            </select>
+        </div>
+
+        <div class="controls-right">
+            <button id="exportExcel" class="btn-ghost">Xuất Excel</button>
+            <button id="refreshBtn" class="btn-ghost">Làm mới</button>
+            <button id="applyBtn" class="btn-primary">Áp dụng</button>
+        </div>
+    </div>
+
+    <div style="overflow:auto;">
+        <table class="selling-table">
+            <thead>
+                <tr>
+                    <th style="width:80px">#</th>
+                    <th style="min-width:220px">Sản phẩm</th>
+                    <th>Danh mục</th>
+                    <th style="width:140px; text-align:right">Tổng đã bán</th>
+                </tr>
+            </thead>
+            <tbody id="sellingBody">
+                @* Server-side fallback rendering (non-JS) *@
+                @{
+                    var modelList = Model?.ToList() ?? new List<ElectronicsShop.Models.ProductContainer>();
+                }
+                @if (!modelList.Any())
+                {
+                    <tr><td colspan="4" class="muted">Không có dữ liệu</td></tr>
+                }
+                else
+                {
+                    var rank = 0;
+                    foreach (var p in modelList.OrderBy(m => m.totalquantitysold).Take(10))
+                    {
+                        rank++;
+                        <tr>
+                            <td><span class="rank-badge">@rank</span></td>
+                            <td>
+                                <div style="font-weight:600">@p.product_name</div>
+                            </td>
+                            <td class="muted">@p.category_name</td>
+                            <td style="text-align:right;font-weight:700">@p.totalquantitysold</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+
+<script>
+    (function () {
+        // serialize server model to JS (used for interactive features)
+        const rawData = @Html.Raw(System.Web.Helpers.Json.Encode(Model ?? Enumerable.Empty<ElectronicsShop.Models.ProductContainer>()));
+        let data = Array.isArray(rawData) ? rawData : [];
+
+        function renderTable(items, top) {
+            const tbody = document.getElementById('sellingBody');
+            tbody.innerHTML = '';
+            const limit = (Number(top) === 0) ? items.length : Math.min(items.length, Number(top));
+            for (let i = 0; i < limit; i++) {
+                const it = items[i];
+                const rank = i + 1;
+                const sold = Number(it.totalquantitysold || 0);
+                const tr = document.createElement('tr');
+
+                tr.innerHTML = `
+                    <td><span class="rank-badge">${rank}</span></td>
+                    <td>
+                        <div style="font-weight:600">${escapeHtml(it.product_name || '')}</div>
+                        <div class="muted" style="font-size:0.9rem">${escapeHtml(it.product_code || '')}</div>
+                    </td>
+                    <td class="muted">${escapeHtml(it.category_name || '')}</td>
+                    <td style="text-align:right;font-weight:700">${sold}</td>
+                `;
+                tbody.appendChild(tr);
+            }
+
+            if (items.length === 0) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td colspan="4" class="muted">Không có dữ liệu</td>`;
+                tbody.appendChild(tr);
+            }
+        }
+
+        function applyFilters() {
+            const top = document.getElementById('topN').value;
+            const search = (document.getElementById('searchTerm').value || '').toLowerCase().trim();
+            const sortBy = document.getElementById('sortBy').value;
+
+            let items = data.slice();
+
+            if (search) {
+                items = items.filter(i =>
+                    (i.product_name && i.product_name.toLowerCase().includes(search)) ||
+                    (i.category_name && i.category_name.toLowerCase().includes(search))
+                );
+            }
+
+            switch (sortBy) {
+                case 'sold_desc':
+                    items.sort((a,b)=> (b.totalquantitysold||0) - (a.totalquantitysold||0));
+                    break;
+                case 'sold_asc':
+                    items.sort((a,b)=> (a.totalquantitysold||0) - (b.totalquantitysold||0));
+                    break;
+                case 'name_asc':
+                    items.sort((a,b)=> (a.product_name||'').localeCompare(b.product_name||''));
+                    break;
+                case 'name_desc':
+                    items.sort((a,b)=> (b.product_name||'').localeCompare(a.product_name||''));
+                    break;
+                default:
+                    items.sort((a,b)=> (a.totalquantitysold||0) - (b.totalquantitysold||0));
+            }
+
+            renderTable(items, top);
+        }
+
+        // Export Excel
+        function exportExcel() {
+            const headers = ['Rank','Product','Category','TotalSold'];
+            const rows = [];
+            const top = document.getElementById('topN').value;
+            const limit = (Number(top) === 0) ? data.length : Math.min(data.length, Number(top));
+            // export in current default sorted order (ascending by sold)
+            const items = data.slice().sort((a,b)=> (a.totalquantitysold||0) - (b.totalquantitysold||0));
+            for (let i = 0; i < limit; i++) {
+                const it = items[i];
+                rows.push({
+                    'Rank': i+1,
+                    'Product': it.product_name || '',
+                    'Category': it.category_name || '',
+                    'TotalSold': it.totalquantitysold || 0
+                });
+            }
+
+            const ws = XLSX.utils.json_to_sheet(rows, {header: headers});
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Unsold_Products");
+            const fileName = `unsold_products_${new Date().toISOString().slice(0,10)}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+        }
+
+        // simple html escape
+        function escapeHtml(s){ return String(s||'').replace(/[&<>"'`]/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;', '`':'&#96;'})[m]; }); }
+
+        // init
+        document.getElementById('applyBtn').addEventListener('click', applyFilters);
+        document.getElementById('refreshBtn').addEventListener('click', function(){
+            // re-apply filters
+            applyFilters();
+        });
+        document.getElementById('exportExcel').addEventListener('click', exportExcel);
+
+        // initial render
+        // sort data ascending by sold by default
+        data.sort((a,b)=> (a.totalquantitysold||0) - (b.totalquantitysold||0));
+        renderTable(data, document.getElementById('topN').value);
+    })();
+</script>
